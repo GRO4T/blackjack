@@ -1,3 +1,5 @@
+// TODO: Document this package
+
 package deck
 
 import (

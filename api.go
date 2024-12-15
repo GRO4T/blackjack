@@ -5,6 +5,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"math/rand"
 	"net/http"
@@ -35,24 +36,24 @@ type GameDto struct {
 }
 
 // TODO: Search if there is more idiomatic way to do this
-func buildDto(game Game) GameDto {
+func buildDto(game *Game) GameDto {
 	return GameDto{
 		TableId: game.TableId,
 		Players: game.Players,
-		Hands:   [][]deck.Card{game.Table.PlayerHand, game.Table.DealerHand},
+		Hands:   [][]deck.Card{},
 		Chips:   game.Chips,
 		Bets:    game.Bets,
 	}
 }
 
 type Api struct {
-	Games  map[string]Game
+	Games  map[string]*Game
 	Random *rand.Rand
 }
 
 func NewApi() Api {
 	return Api{
-		Games:  map[string]Game{},
+		Games:  map[string]*Game{},
 		Random: rand.New(rand.NewSource(time.Now().UnixNano())),
 	}
 }
@@ -65,18 +66,17 @@ func (a *Api) CreateGame(w http.ResponseWriter, r *http.Request) {
 	log.Printf("POST /tables\n") // TODO: Can we simply make this automatic?
 
 	tableId := strconv.Itoa(a.Random.Intn(maxTableId))
-	newGame := Game{
+	newGame := &Game{
 		Table:   NewBlackjack(),
 		TableId: tableId,
 		Players: []string{},
 		Chips:   []int{},
 		Bets:    []int{},
 	}
-	newGame.Table.deal() // TODO: Maybe this should be in the initialization?
 	a.Games[tableId] = newGame
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(buildDto(newGame))
+	json.NewEncoder(w).Encode(buildDto(newGame)) // TODO: Maybe this should simply return the tableId?
 	log.Printf("Created a new game %s\n", tableId)
 }
 
@@ -88,6 +88,7 @@ func (a *Api) GetGameState(w http.ResponseWriter, r *http.Request) {
 	log.Printf("GET /tables/%s\n", r.PathValue("tableId"))
 
 	tableId := r.PathValue("tableId")
+	fmt.Println(tableId)
 	game, ok := a.Games[tableId]
 	if !ok {
 		log.Printf("Game not found: %s\n", tableId)
@@ -125,7 +126,6 @@ func (a *Api) AddPlayer(w http.ResponseWriter, r *http.Request) {
 	game.Players = append(game.Players, playerId)
 	game.Chips = append(game.Chips, 100) // TODO: Remove magic number
 	game.Bets = append(game.Bets, 0)
-	a.Games[tableId] = game
 
 	var resp struct {
 		PlayerId string `json:"playerId"`

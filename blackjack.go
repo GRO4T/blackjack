@@ -1,56 +1,178 @@
+// TODO: Change return types to (<type>, error) and handle errors
 package main
 
 import (
-	"fmt"
-
 	"github.com/GRO4T/blackjack/deck"
 )
 
+type State int
+
+const (
+	WaitingForPlayers State = iota
+	CardsDealt
+	Finished
+)
+
+type Outcome int
+
+const (
+	Undecided Outcome = iota
+	Win
+	Lose
+	Push
+)
+
+type Action int
+
+const (
+	Hit Action = iota
+	Stand
+)
+
+type Player struct {
+	Id      string  `json:"-"`
+	Name    string  `json:"name"`
+	IsReady bool    `json:"readiness"`
+	Chips   int     `json:"chips"`
+	Bet     int     `json:"bet"`
+	Outcome Outcome `json:"outcome"`
+}
+
 type Blackjack struct {
-	Deck       []deck.Card
-	PlayerHand []deck.Card
-	DealerHand []deck.Card
+	Deck          []deck.Card   `json:"-"`
+	Hands         [][]deck.Card `json:"hands"`
+	Players       []*Player     `json:"players"`
+	State         State         `json:"state"`
+	CurrentPlayer int           `json:"currentPlayer"`
+}
+
+func NewPlayer(id string, name string) Player {
+	return Player{
+		Id:      id,
+		Name:    name,
+		IsReady: false,
+		Chips:   100,
+		Bet:     0,
+		Outcome: Undecided,
+	}
 }
 
 func NewBlackjack() Blackjack {
+	dealerHand := []deck.Card{}
 	return Blackjack{
-		Deck:       deck.New(deck.WithShuffle()),
-		PlayerHand: []deck.Card{},
-		DealerHand: []deck.Card{},
+		Deck:          deck.New(deck.WithShuffle()),
+		Hands:         [][]deck.Card{dealerHand},
+		Players:       []*Player{},
+		State:         WaitingForPlayers,
+		CurrentPlayer: 1,
 	}
 }
 
-func (b *Blackjack) Play() {
-	b.deal()
+func (b *Blackjack) AddPlayer(id string, name string) {
+	if b.State != WaitingForPlayers {
+		return
+	}
+	newPlayer := NewPlayer(id, name)
+	b.Players = append(b.Players, &newPlayer)
+	b.Hands = append(b.Hands, []deck.Card{})
+}
 
-	b.playerTurn()
-	playerScore := getScore(b.PlayerHand)
-	if playerScore > 21 {
-		fmt.Println("Player busts! Dealer wins.")
+func (b *Blackjack) TogglePlayerReady(playerId string) {
+	if b.State != WaitingForPlayers {
+		return
+	}
+	allPlayersReady := true
+	for _, player := range b.Players {
+		if player.Id == playerId {
+			player.IsReady = !player.IsReady
+		}
+		if !player.IsReady {
+			allPlayersReady = false
+		}
+	}
+	if allPlayersReady {
+		b.Deal()
+		b.State = CardsDealt
+	}
+}
+
+func (b *Blackjack) Deal() {
+	if b.State == CardsDealt {
+		return
+	}
+	for cardCount := 0; cardCount < 2; cardCount++ {
+		for player := 0; player < len(b.Hands); player++ {
+			b.Hands[player] = append(b.Hands[player], b.Deck[0])
+			b.Deck = b.Deck[1:]
+		}
+	}
+}
+
+func (b *Blackjack) GetPlayerCount() int {
+	return len(b.Hands) - 1
+}
+
+func (b *Blackjack) GetPlayerHand(playerNumber int) []deck.Card {
+	return b.Hands[playerNumber+1]
+}
+
+func (b *Blackjack) GetDealerHand() []deck.Card {
+	return b.Hands[0]
+}
+
+func (b *Blackjack) PlayerAction(playerNumber int, action Action) bool {
+	if b.State != CardsDealt || playerNumber+1 != b.CurrentPlayer {
+		return false
+	}
+
+	switch action {
+	case Hit:
+		b.Hands[playerNumber+1] = append(b.Hands[playerNumber+1], b.Deck[0])
+		b.Deck = b.Deck[1:]
+		b.CurrentPlayer++
+	case Stand:
+		b.CurrentPlayer++
+	}
+
+	// Dealer's turn
+	if b.CurrentPlayer == len(b.Hands) {
+		// TODO: Implement dealer AI
+		b.State = Finished
+		b.DetermineOutcomes()
+	}
+
+	return true
+}
+
+func (b *Blackjack) DetermineOutcomes() {
+	if b.State != Finished {
 		return
 	}
 
-	b.dealerTurn()
-	dealerScore := getScore(b.DealerHand)
-	if dealerScore > 21 {
-		fmt.Println("Dealer busts! Player wins.")
-		return
-	}
+	dealerScore := getScore(b.GetDealerHand())
+	dealerHasBlackjack := isBlackjack(b.GetDealerHand())
+	for i := 0; i < b.GetPlayerCount(); i++ {
+		player := b.Players[i]
+		playerScore := getScore(b.GetPlayerHand(i))
+		playerHasBlackjack := isBlackjack(b.GetPlayerHand(i))
 
-	if isNaturalBlackjack(b.DealerHand) {
-		fmt.Println("Dealer has a natural blackjack! Dealer wins.")
-		return
-	} else if isNaturalBlackjack(b.PlayerHand) {
-		fmt.Println("Player has a natural blackjack! Player wins.")
-		return
-	}
-
-	if playerScore > dealerScore {
-		fmt.Println("Player wins!")
-	} else if playerScore == dealerScore {
-		fmt.Println("It's a tie!")
-	} else {
-		fmt.Println("Dealer wins!")
+		if playerHasBlackjack && dealerHasBlackjack {
+			player.Outcome = Push
+		} else if playerHasBlackjack {
+			player.Outcome = Win
+		} else if dealerHasBlackjack {
+			player.Outcome = Lose
+		} else if playerScore > 21 {
+			player.Outcome = Lose
+		} else if dealerScore > 21 {
+			player.Outcome = Win
+		} else if playerScore > dealerScore {
+			player.Outcome = Win
+		} else if playerScore < dealerScore {
+			player.Outcome = Lose
+		} else {
+			player.Outcome = Push
+		}
 	}
 }
 
@@ -74,7 +196,7 @@ func getScore(hand []deck.Card) int {
 	return score
 }
 
-func isNaturalBlackjack(hand []deck.Card) bool {
+func isBlackjack(hand []deck.Card) bool {
 	if len(hand) != 2 {
 		return false
 	}
@@ -88,41 +210,4 @@ func isNaturalBlackjack(hand []deck.Card) bool {
 			hand[i].Rank == deck.King
 	}
 	return (isAce(0) && isTenOrQKJ(1)) || (isAce(1) && isTenOrQKJ(0))
-}
-
-func (b *Blackjack) deal() {
-	b.PlayerHand = append(b.PlayerHand, b.Deck[0])
-	b.DealerHand = append(b.DealerHand, b.Deck[1])
-	b.PlayerHand = append(b.PlayerHand, b.Deck[2])
-	b.DealerHand = append(b.DealerHand, b.Deck[3])
-	b.Deck = b.Deck[4:]
-}
-
-func (b *Blackjack) playerTurn() {
-	fmt.Printf("Player: %s (score=%d)\n", b.PlayerHand, getScore(b.PlayerHand))
-	fmt.Println("1. Hit")
-	fmt.Println("2. Stand")
-	endTurn := false
-	for !endTurn {
-		var action int
-		fmt.Scan(&action)
-		if action == 1 {
-			b.PlayerHand = append(b.PlayerHand, b.Deck[0])
-			b.Deck = b.Deck[1:]
-			fmt.Printf("Player: %s (score=%d)\n", b.PlayerHand, getScore(b.PlayerHand))
-		} else if action != 2 {
-			fmt.Println("Invalid action. Please choose again.")
-			fmt.Println("1. Hit")
-			fmt.Println("2. Stand")
-			continue
-		}
-		endTurn = true
-	}
-}
-
-func (b *Blackjack) dealerTurn() {
-	fmt.Printf("Dealer: Here's my hand (score=%d):\n", getScore(b.DealerHand))
-	for _, card := range b.DealerHand {
-		fmt.Println(card)
-	}
 }

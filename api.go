@@ -1,59 +1,35 @@
 // TODO: Improve the file structure (types and functions are mixed up)
-// TODO: Add API tests
 
 package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"math/rand"
 	"net/http"
 	"strconv"
 	"time"
-
-	"github.com/GRO4T/blackjack/deck"
 )
 
 const maxTableId = 1000
 const maxPlayers = 1
 
-// TODO: Think about whether chips and bets should be a part of Blackjack
-type Game struct {
-	Table   Blackjack
-	TableId string
-	Players []string
-	Chips   []int
-	Bets    []int
-}
-
-type GameDto struct {
-	TableId string        `json:"tableId"`
-	Players []string      `json:"players"`
-	Hands   [][]deck.Card `json:"hands"`
-	Chips   []int         `json:"chips"`
-	Bets    []int         `json:"bets"`
-}
-
-// TODO: Search if there is more idiomatic way to do this
-func buildDto(game *Game) GameDto {
-	return GameDto{
-		TableId: game.TableId,
-		Players: game.Players,
-		Hands:   [][]deck.Card{},
-		Chips:   game.Chips,
-		Bets:    game.Bets,
-	}
-}
-
 type Api struct {
-	Games  map[string]*Game
+	Games  map[string]*Blackjack
 	Random *rand.Rand
+}
+
+type CreateGameResponse struct {
+	TableId string `json:"tableId"`
+}
+
+type AddPlayerResponse struct {
+	PlayerId string `json:"playerId"`
 }
 
 func NewApi() Api {
 	return Api{
-		Games:  map[string]*Game{},
+		Games:  map[string]*Blackjack{},
 		Random: rand.New(rand.NewSource(time.Now().UnixNano())),
 	}
 }
@@ -66,17 +42,13 @@ func (a *Api) CreateGame(w http.ResponseWriter, r *http.Request) {
 	log.Printf("POST /tables\n") // TODO: Can we simply make this automatic?
 
 	tableId := strconv.Itoa(a.Random.Intn(maxTableId))
-	newGame := &Game{
-		Table:   NewBlackjack(),
-		TableId: tableId,
-		Players: []string{},
-		Chips:   []int{},
-		Bets:    []int{},
-	}
-	a.Games[tableId] = newGame
+	newGame := NewBlackjack()
+	a.Games[tableId] = &newGame
 
+	var resp CreateGameResponse
+	resp.TableId = tableId
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(buildDto(newGame)) // TODO: Maybe this should simply return the tableId?
+	json.NewEncoder(w).Encode(resp)
 	log.Printf("Created a new game %s\n", tableId)
 }
 
@@ -88,7 +60,6 @@ func (a *Api) GetGameState(w http.ResponseWriter, r *http.Request) {
 	log.Printf("GET /tables/%s\n", r.PathValue("tableId"))
 
 	tableId := r.PathValue("tableId")
-	fmt.Println(tableId)
 	game, ok := a.Games[tableId]
 	if !ok {
 		log.Printf("Game not found: %s\n", tableId)
@@ -97,7 +68,7 @@ func (a *Api) GetGameState(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(buildDto(game))
+	json.NewEncoder(w).Encode(game)
 	log.Printf("Retrieved game state for %s\n", tableId)
 }
 
@@ -122,18 +93,62 @@ func (a *Api) AddPlayer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	playerId := strconv.Itoa(a.Random.Intn(maxTableId))
-	game.Players = append(game.Players, playerId)
-	game.Chips = append(game.Chips, 100) // TODO: Remove magic number
-	game.Bets = append(game.Bets, 0)
-
-	var resp struct {
-		PlayerId string `json:"playerId"`
+	if game.State != WaitingForPlayers {
+		log.Printf("Game has already started: %s\n", tableId)
+		http.Error(w, "Game has already started", http.StatusForbidden)
+		return
 	}
+
+	playerId := strconv.Itoa(a.Random.Intn(maxTableId))
+	game.AddPlayer(playerId, "Bob")
+
+	var resp AddPlayerResponse
 	resp.PlayerId = playerId
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp)
 	log.Printf("Added player %s to game %s\n", playerId, tableId)
+}
+
+func (a *Api) TogglePlayerReady(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+
+	log.Printf("POST /tables/ready/%s/%s\n", r.PathValue("tableId"), r.PathValue("playerId"))
+
+	tableId := r.PathValue("tableId")
+	game, ok := a.Games[tableId]
+	if !ok {
+		log.Printf("Game not found: %s\n", tableId)
+		http.Error(w, "Game not found", http.StatusNotFound)
+		return
+	}
+
+	playerId := r.PathValue("playerId")
+	playerIndex := -1
+	for i, p := range game.Players {
+		if p.Id == playerId {
+			playerIndex = i
+			break
+		}
+	}
+	if playerIndex == -1 {
+		log.Printf("Player not found: %s\n", playerId)
+		http.Error(w, "Player not found", http.StatusNotFound)
+		return
+	}
+
+	if game.State != WaitingForPlayers {
+		log.Printf("Game is not waiting for readiness: %s\n", tableId)
+		http.Error(w, "Game is not waiting for readiness", http.StatusForbidden)
+		return
+	}
+
+	game.TogglePlayerReady(playerId)
+	player := game.Players[playerIndex]
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(player)
+	log.Printf("Toggled readiness for player %s\n", playerId)
 }
 
 func (a *Api) PlayerAction(w http.ResponseWriter, r *http.Request) {
@@ -154,7 +169,7 @@ func (a *Api) PlayerAction(w http.ResponseWriter, r *http.Request) {
 	playerId := r.PathValue("playerId")
 	playerIndex := -1
 	for i, p := range game.Players {
-		if p == playerId {
+		if p.Id == playerId {
 			playerIndex = i
 			break
 		}
@@ -167,20 +182,20 @@ func (a *Api) PlayerAction(w http.ResponseWriter, r *http.Request) {
 
 	action := r.URL.Query().Get("action")
 
-	// TODO: Add Hit and Stand functions to Blackjack
 	if action == "hit" {
-		game.Table.PlayerHand = append(game.Table.PlayerHand, game.Table.Deck[0])
-		game.Table.Deck = game.Table.Deck[1:]
-		game.Chips[playerIndex] -= game.Bets[playerIndex]
-		game.Bets[playerIndex] += 10 // TODO: Allow player to control the bet amount
+		if !game.PlayerAction(playerIndex, Hit) {
+			http.Error(w, "Invalid action", http.StatusBadRequest)
+			return
+		}
 		log.Printf("Player %s hit\n", playerId)
 	} else if action == "stand" {
+		if !game.PlayerAction(playerIndex, Stand) {
+			http.Error(w, "Invalid action", http.StatusBadRequest)
+			return
+		}
 		log.Printf("Player %s stood\n", playerId)
 	} else {
 		http.Error(w, "Invalid action", http.StatusBadRequest)
 		return
 	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(buildDto(game))
 }

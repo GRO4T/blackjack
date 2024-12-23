@@ -1,0 +1,45 @@
+linters:
+  disable-all: true
+  enable:
+    - bodyclose
+    - copyloopvar
+    - cyclop
+    - errcheck
+    - errname
+    - gocritic
+    - gofmt
+    - gosec
+    - gosimple
+    - govet
+    - iface
+    - ineffassign
+    - intrange
+    - ireturn
+    - makezero
+    - misspell
+    - nakedret
+    - nestif
+    - nilerr
+    - nilnil
+    - noctx
+    - mnd
+    - perfsprint
+    - prealloc
+    - predeclared
+    - reassign
+    - sloglint
+    - staticcheck
+    - tagalign
+    - tenv
+    - testableexamples
+    - testifylint
+    - testpackage
+    - thelper
+    - unconvert
+    - unparam
+    - usestdlibvars
+    - unused
+    - wastedassign
+    - whitespace
+    - wrapcheck
+    

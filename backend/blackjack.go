@@ -5,6 +5,10 @@ import (
 	"github.com/GRO4T/blackjack/deck"
 )
 
+const (
+	initialChips = 100
+)
+
 type State int
 
 const (
@@ -32,7 +36,7 @@ const (
 type Player struct {
 	Id      string  `json:"-"`
 	Name    string  `json:"name"`
-	IsReady bool    `json:"readiness"`
+	IsReady bool    `json:"isReady"`
 	Chips   int     `json:"chips"`
 	Bet     int     `json:"bet"`
 	Outcome Outcome `json:"outcome"`
@@ -51,7 +55,7 @@ func NewPlayer(id string, name string) Player {
 		Id:      id,
 		Name:    name,
 		IsReady: false,
-		Chips:   100,
+		Chips:   initialChips,
 		Bet:     0,
 		Outcome: Undecided,
 	}
@@ -100,7 +104,7 @@ func (b *Blackjack) Deal() {
 	if b.State == CardsDealt {
 		return
 	}
-	for cardCount := 0; cardCount < 2; cardCount++ {
+	for range 2 {
 		for player := 0; player < len(b.Hands); player++ {
 			b.Hands[player] = append(b.Hands[player], b.Deck[0])
 			b.Deck = b.Deck[1:]
@@ -148,32 +152,40 @@ func (b *Blackjack) DetermineOutcomes() {
 	if b.State != Finished {
 		return
 	}
-
-	dealerScore := getScore(b.GetDealerHand())
-	dealerHasBlackjack := isBlackjack(b.GetDealerHand())
-	for i := 0; i < b.GetPlayerCount(); i++ {
-		player := b.Players[i]
-		playerScore := getScore(b.GetPlayerHand(i))
-		playerHasBlackjack := isBlackjack(b.GetPlayerHand(i))
-
-		if playerHasBlackjack && dealerHasBlackjack {
-			player.Outcome = Push
-		} else if playerHasBlackjack {
-			player.Outcome = Win
-		} else if dealerHasBlackjack {
-			player.Outcome = Lose
-		} else if playerScore > 21 {
-			player.Outcome = Lose
-		} else if dealerScore > 21 {
-			player.Outcome = Win
-		} else if playerScore > dealerScore {
-			player.Outcome = Win
-		} else if playerScore < dealerScore {
-			player.Outcome = Lose
-		} else {
-			player.Outcome = Push
-		}
+	for i := range b.GetPlayerCount() {
+		b.Players[i].Outcome = determineOutcome(b.GetDealerHand(), b.GetPlayerHand(i))
 	}
+}
+
+// nolint: mnd
+func determineOutcome(dealerHand []deck.Card, playerHand []deck.Card) Outcome {
+	dealerScore := getScore(dealerHand)
+	playerScore := getScore(playerHand)
+	dealerHasBlackjack := isBlackjack(dealerHand)
+	playerHasBlackjack := isBlackjack(playerHand)
+
+	if playerHasBlackjack && dealerHasBlackjack {
+		return Push
+	}
+	if playerHasBlackjack {
+		return Win
+	}
+	if dealerHasBlackjack {
+		return Lose
+	}
+	if playerScore > 21 {
+		return Lose
+	}
+	if dealerScore > 21 {
+		return Win
+	}
+	if playerScore > dealerScore {
+		return Win
+	}
+	if playerScore < dealerScore {
+		return Lose
+	}
+	return Push
 }
 
 func getScore(hand []deck.Card) int {
@@ -186,7 +198,7 @@ func getScore(hand []deck.Card) int {
 		score += int(card.Rank)
 	}
 	for aceCount > 0 {
-		if score > 21 {
+		if score > 21 { //nolint: mnd
 			score -= 10
 			aceCount--
 		} else {
@@ -197,7 +209,7 @@ func getScore(hand []deck.Card) int {
 }
 
 func isBlackjack(hand []deck.Card) bool {
-	if len(hand) != 2 {
+	if len(hand) != 2 { //nolint: mnd
 		return false
 	}
 	isAce := func(i int) bool {

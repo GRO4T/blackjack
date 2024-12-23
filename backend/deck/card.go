@@ -3,7 +3,8 @@
 package deck
 
 import (
-	"math/rand"
+	"crypto/rand"
+	"math/big"
 	"sort"
 )
 
@@ -73,8 +74,11 @@ func Sort(deck []Card, less ...func(i, j int) bool) {
 func Shuffle(deck []Card) {
 	// Fisher-Yates shuffle
 	for i := len(deck) - 1; i > 0; i-- {
-		j := rand.Intn(i + 1)
-		deck[i], deck[j] = deck[j], deck[i]
+		j, err := rand.Int(rand.Reader, big.NewInt(int64(i+1)))
+		if err != nil {
+			panic(err)
+		}
+		deck[i], deck[j.Int64()] = deck[j.Int64()], deck[i]
 	}
 }
 
@@ -87,7 +91,7 @@ func WithShuffle() func([]Card) []Card {
 
 func WithJokers(n int) func([]Card) []Card {
 	return func(deck []Card) []Card {
-		for i := 0; i < n; i++ {
+		for i := range n {
 			deck = append(deck, Card{Rank: Joker, Suit: Suit(i)})
 		}
 		Sort(deck)

@@ -1,40 +1,43 @@
-package deck
+package deck_test
 
 import (
 	"testing"
+
+	"github.com/GRO4T/blackjack/deck"
 )
 
-func AssertDeckSorted(t *testing.T, deck []Card) {
-	for i := 1; i < len(deck); i++ {
-		if deck[i].Suit < deck[i-1].Suit {
+func AssertDeckSorted(t *testing.T, d []deck.Card) {
+	t.Helper()
+	for i := 1; i < len(d); i++ {
+		if d[i].Suit < d[i-1].Suit {
 			t.Errorf("Deck is not sorted by Suit")
 		}
-		if deck[i].Suit == deck[i-1].Suit && deck[i].Rank < deck[i-1].Rank {
+		if d[i].Suit == d[i-1].Suit && d[i].Rank < d[i-1].Rank {
 			t.Errorf("Deck is not sorted by Rank")
 		}
 	}
 }
 
 func TestNew(t *testing.T) {
-	deck := New()
-	if len(deck) != 52 {
-		t.Errorf("Expected deck length of 52, but got %v", len(deck))
+	d := deck.New()
+	if len(d) != 52 {
+		t.Errorf("Expected deck length of 52, but got %v", len(d))
 	}
-	AssertDeckSorted(t, deck)
+	AssertDeckSorted(t, d)
 }
 
 func TestNewWithShuffle(t *testing.T) {
-	deck := New(WithShuffle())
-	if len(deck) != 52 {
-		t.Errorf("Expected deck length of 52, but got %v", len(deck))
+	d := deck.New(deck.WithShuffle())
+	if len(d) != 52 {
+		t.Errorf("Expected deck length of 52, but got %v", len(d))
 	}
 	sorted := true
-	for i := 1; i < len(deck); i++ {
-		if deck[i].Suit < deck[i-1].Suit {
+	for i := 1; i < len(d); i++ {
+		if d[i].Suit < d[i-1].Suit {
 			sorted = false
 			break
 		}
-		if deck[i].Suit == deck[i-1].Suit && deck[i].Rank < deck[i-1].Rank {
+		if d[i].Suit == d[i-1].Suit && d[i].Rank < d[i-1].Rank {
 			sorted = false
 			break
 		}
@@ -45,20 +48,20 @@ func TestNewWithShuffle(t *testing.T) {
 }
 
 func TestNewWithJokers(t *testing.T) {
-	deck := New(WithJokers(1))
-	if len(deck) != 53 {
-		t.Errorf("Expected deck length of 53, but got %v", len(deck))
+	d := deck.New(deck.WithJokers(1))
+	if len(d) != 53 {
+		t.Errorf("Expected deck length of 53, but got %v", len(d))
 	}
-	AssertDeckSorted(t, deck)
+	AssertDeckSorted(t, d)
 }
 
 func TestWithFilter(t *testing.T) {
-	deck := New(WithFilter([]Card{Card{Suit: Spades, Rank: Ace}}))
-	if len(deck) != 51 {
-		t.Errorf("Expected deck length of 51, but got %v", len(deck))
+	d := deck.New(deck.WithFilter([]deck.Card{{Suit: deck.Spades, Rank: deck.Ace}}))
+	if len(d) != 51 {
+		t.Errorf("Expected deck length of 51, but got %v", len(d))
 	}
-	for _, card := range deck {
-		if card.Suit == Spades && card.Rank == Ace {
+	for _, card := range d {
+		if card.Suit == deck.Spades && card.Rank == deck.Ace {
 			t.Errorf("Expected Ace of Spades to be filtered out")
 		}
 	}
@@ -66,14 +69,14 @@ func TestWithFilter(t *testing.T) {
 
 func TestShuffle(t *testing.T) {
 	// Arrange
-	deck := New()
-	oldDeck := append([]Card{}, deck...)
+	d := deck.New()
+	oldDeck := append([]deck.Card{}, d...)
 	// Act
-	Shuffle(deck)
+	deck.Shuffle(d)
 	// Assert
 	equal := true
-	for i := range deck {
-		if deck[i] != oldDeck[i] {
+	for i := range d {
+		if d[i] != oldDeck[i] {
 			equal = false
 			break
 		}
@@ -85,16 +88,16 @@ func TestShuffle(t *testing.T) {
 
 func TestSort(t *testing.T) {
 	// Arrange
-	deck := New()
-	Shuffle(deck)
+	d := deck.New()
+	deck.Shuffle(d)
 	// Act
-	Sort(deck)
+	deck.Sort(d)
 	// Assert
-	for i := 1; i < len(deck); i++ {
-		if deck[i].Suit < deck[i-1].Suit {
+	for i := 1; i < len(d); i++ {
+		if d[i].Suit < d[i-1].Suit {
 			t.Errorf("Deck is not sorted by Suit")
 		}
-		if deck[i].Suit == deck[i-1].Suit && deck[i].Rank < deck[i-1].Rank {
+		if d[i].Suit == d[i-1].Suit && d[i].Rank < d[i-1].Rank {
 			t.Errorf("Deck is not sorted by Rank")
 		}
 	}
@@ -102,21 +105,21 @@ func TestSort(t *testing.T) {
 
 func TestSortWithCustomLess(t *testing.T) {
 	// Arrange
-	deck := New()
-	Shuffle(deck)
+	d := deck.New()
+	deck.Shuffle(d)
 	// Act
-	Sort(deck, func(i, j int) bool {
-		if deck[i].Suit == deck[j].Suit {
-			return deck[i].Rank > deck[j].Rank
+	deck.Sort(d, func(i, j int) bool {
+		if d[i].Suit == d[j].Suit {
+			return d[i].Rank > d[j].Rank
 		}
-		return deck[i].Suit > deck[j].Suit
+		return d[i].Suit > d[j].Suit
 	})
 	// Assert
-	for i := 1; i < len(deck); i++ {
-		if deck[i].Suit > deck[i-1].Suit {
+	for i := 1; i < len(d); i++ {
+		if d[i].Suit > d[i-1].Suit {
 			t.Errorf("Deck is not sorted by Suit")
 		}
-		if deck[i].Suit == deck[i-1].Suit && deck[i].Rank > deck[i-1].Rank {
+		if d[i].Suit == d[i-1].Suit && d[i].Rank > d[i-1].Rank {
 			t.Errorf("Deck is not sorted by Rank")
 		}
 	}

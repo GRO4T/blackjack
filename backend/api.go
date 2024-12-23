@@ -3,20 +3,19 @@
 package main
 
 import (
+	"crypto/rand"
 	"encoding/json"
 	"log"
-	"math/rand"
+	"math/big"
 	"net/http"
 	"strconv"
-	"time"
 )
 
-const maxTableId = 1000
+const maxId int64 = 1000
 const maxPlayers = 1
 
 type Api struct {
-	Games  map[string]*Blackjack
-	Random *rand.Rand
+	Games map[string]*Blackjack
 }
 
 type CreateGameResponse struct {
@@ -29,8 +28,7 @@ type AddPlayerResponse struct {
 
 func NewApi() Api {
 	return Api{
-		Games:  map[string]*Blackjack{},
-		Random: rand.New(rand.NewSource(time.Now().UnixNano())),
+		Games: map[string]*Blackjack{},
 	}
 }
 
@@ -41,14 +39,18 @@ func (a *Api) CreateGame(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("POST /tables\n") // TODO: Can we simply make this automatic?
 
-	tableId := strconv.Itoa(a.Random.Intn(maxTableId))
+	tableId := getRandomId()
 	newGame := NewBlackjack()
 	a.Games[tableId] = &newGame
 
 	var resp CreateGameResponse
 	resp.TableId = tableId
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	if err := json.NewEncoder(w).Encode(resp); err != nil {
+		log.Printf("Failed to encode response: %v\n", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
 	log.Printf("Created a new game %s\n", tableId)
 }
 
@@ -68,7 +70,11 @@ func (a *Api) GetGameState(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(game)
+	if err := json.NewEncoder(w).Encode(game); err != nil {
+		log.Printf("Failed to encode response: %v\n", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
 	log.Printf("Retrieved game state for %s\n", tableId)
 }
 
@@ -99,13 +105,17 @@ func (a *Api) AddPlayer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	playerId := strconv.Itoa(a.Random.Intn(maxTableId))
+	playerId := getRandomId()
 	game.AddPlayer(playerId, "Bob")
 
 	var resp AddPlayerResponse
 	resp.PlayerId = playerId
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	if err := json.NewEncoder(w).Encode(resp); err != nil {
+		log.Printf("Failed to encode response: %v\n", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
 	log.Printf("Added player %s to game %s\n", playerId, tableId)
 }
 
@@ -147,10 +157,15 @@ func (a *Api) TogglePlayerReady(w http.ResponseWriter, r *http.Request) {
 	game.TogglePlayerReady(playerId)
 	player := game.Players[playerIndex]
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(player)
+	if err := json.NewEncoder(w).Encode(player); err != nil {
+		log.Printf("Failed to encode response: %v\n", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
 	log.Printf("Toggled readiness for player %s\n", playerId)
 }
 
+// nolint: cyclop
 func (a *Api) PlayerAction(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -182,20 +197,29 @@ func (a *Api) PlayerAction(w http.ResponseWriter, r *http.Request) {
 
 	action := r.URL.Query().Get("action")
 
-	if action == "hit" {
+	switch action {
+	case "hit":
 		if !game.PlayerAction(playerIndex, Hit) {
 			http.Error(w, "Invalid action", http.StatusBadRequest)
 			return
 		}
 		log.Printf("Player %s hit\n", playerId)
-	} else if action == "stand" {
+	case "stand":
 		if !game.PlayerAction(playerIndex, Stand) {
 			http.Error(w, "Invalid action", http.StatusBadRequest)
 			return
 		}
 		log.Printf("Player %s stood\n", playerId)
-	} else {
+	default:
 		http.Error(w, "Invalid action", http.StatusBadRequest)
 		return
 	}
+}
+
+func getRandomId() string {
+	id, err := rand.Int(rand.Reader, big.NewInt(maxId))
+	if err != nil {
+		panic(err)
+	}
+	return strconv.Itoa(int(id.Int64()))
 }

@@ -3,14 +3,24 @@ package main
 import (
 	"log"
 	"net/http"
+	"time"
 )
 
+// nolint: mnd
 func main() {
 	api := NewApi()
-	http.HandleFunc("/tables", api.CreateGame)
-	http.HandleFunc("/tables/{tableId}", api.GetGameState)
-	http.HandleFunc("/tables/ready/{tableId}/{playerId}", api.TogglePlayerReady)
-	http.HandleFunc("/tables/players/{tableId}", api.AddPlayer)
-	http.HandleFunc("/tables/{tableId}/{playerId}", api.PlayerAction)
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	mux := http.NewServeMux()
+	mux.HandleFunc("/tables", api.CreateGame)
+	mux.HandleFunc("/tables/{tableId}", api.GetGameState)
+	mux.HandleFunc("/tables/ready/{tableId}/{playerId}", api.TogglePlayerReady)
+	mux.HandleFunc("/tables/players/{tableId}", api.AddPlayer)
+	mux.HandleFunc("/tables/{tableId}/{playerId}", api.PlayerAction)
+	s := &http.Server{
+		Addr:           ":8080",
+		Handler:        mux,
+		ReadTimeout:    10 * time.Second,
+		WriteTimeout:   10 * time.Second,
+		MaxHeaderBytes: 1 << 20,
+	}
+	log.Fatal(s.ListenAndServe())
 }

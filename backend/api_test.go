@@ -1,3 +1,4 @@
+// nolint: noctx
 package main
 
 import (
@@ -14,11 +15,12 @@ func TestCreateGame(t *testing.T) {
 
 	// Act
 	resp, err := http.Post(server.URL, "application/json", nil)
-
-	// Assert
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer resp.Body.Close()
+
+	// Assert
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("Expected status OK; got %v\n", resp.Status)
 	}
@@ -50,6 +52,7 @@ func TestGetGameState(t *testing.T) {
 	responseWriter := httptest.NewRecorder()
 	api.GetGameState(responseWriter, request)
 	resp := responseWriter.Result()
+	defer resp.Body.Close()
 
 	// Assert
 	if resp.StatusCode != http.StatusOK {
@@ -76,6 +79,7 @@ func TestAddPlayer(t *testing.T) {
 	responseWriter := httptest.NewRecorder()
 	api.AddPlayer(responseWriter, request)
 	resp := responseWriter.Result()
+	defer resp.Body.Close()
 
 	// Assert
 	if resp.StatusCode != http.StatusOK {
@@ -104,6 +108,7 @@ func TestTogglePlayerReadyWhenPlayerNotReady(t *testing.T) {
 	responseWriter := httptest.NewRecorder()
 	api.TogglePlayerReady(responseWriter, request)
 	resp := responseWriter.Result()
+	defer resp.Body.Close()
 
 	// Assert
 	if resp.StatusCode != http.StatusOK {
@@ -140,6 +145,7 @@ func TestTogglePlayerReadyWhenPlayerReady(t *testing.T) {
 	responseWriter := httptest.NewRecorder()
 	api.TogglePlayerReady(responseWriter, request)
 	resp := responseWriter.Result()
+	defer resp.Body.Close()
 
 	// Assert
 	if resp.StatusCode != http.StatusOK {
@@ -176,6 +182,7 @@ func TestPlayerHit(t *testing.T) {
 	responseWriter := httptest.NewRecorder()
 	api.PlayerAction(responseWriter, request)
 	resp := responseWriter.Result()
+	defer resp.Body.Close()
 
 	// Assert
 	if err != nil {
@@ -189,6 +196,7 @@ func TestPlayerHit(t *testing.T) {
 	}
 }
 
+//nolint:cyclop
 func TestSimpleGame(t *testing.T) {
 	api := NewApi()
 
@@ -200,6 +208,7 @@ func TestSimpleGame(t *testing.T) {
 	createGameResponseWriter := httptest.NewRecorder()
 	api.CreateGame(createGameResponseWriter, createGameRequest)
 	createGameResp := createGameResponseWriter.Result()
+	defer createGameResp.Body.Close()
 	if createGameResp.StatusCode != http.StatusOK {
 		t.Fatalf("Expected status OK; got %v\n", createGameResp.Status)
 	}
@@ -218,6 +227,7 @@ func TestSimpleGame(t *testing.T) {
 	addPlayerResponseWriter := httptest.NewRecorder()
 	api.AddPlayer(addPlayerResponseWriter, addPlayerRequest)
 	addPlayerResp := addPlayerResponseWriter.Result()
+	defer addPlayerResp.Body.Close()
 	if addPlayerResp.StatusCode != http.StatusOK {
 		t.Fatalf("Expected status OK; got %v\n", addPlayerResp.Status)
 	}
@@ -237,6 +247,7 @@ func TestSimpleGame(t *testing.T) {
 	togglePlayerReadyResponseWriter := httptest.NewRecorder()
 	api.TogglePlayerReady(togglePlayerReadyResponseWriter, togglePlayerReadyRequest)
 	togglePlayerReadyResp := togglePlayerReadyResponseWriter.Result()
+	defer togglePlayerReadyResp.Body.Close()
 	if togglePlayerReadyResp.StatusCode != http.StatusOK {
 		t.Fatalf("Expected status OK; got %v\n", togglePlayerReadyResp.Status)
 	}
@@ -251,6 +262,7 @@ func TestSimpleGame(t *testing.T) {
 	playerHitResponseWriter := httptest.NewRecorder()
 	api.PlayerAction(playerHitResponseWriter, playerHitRequest)
 	playerHitResp := playerHitResponseWriter.Result()
+	defer playerHitResp.Body.Close()
 	if playerHitResp.StatusCode != http.StatusOK {
 		t.Fatalf("Expected status OK; got %v\n", playerHitResp.Status)
 	}
@@ -264,6 +276,7 @@ func TestSimpleGame(t *testing.T) {
 	getGameStateResponseWriter := httptest.NewRecorder()
 	api.GetGameState(getGameStateResponseWriter, getGameStateRequest)
 	getGameStateResp := getGameStateResponseWriter.Result()
+	defer getGameStateResp.Body.Close()
 	if getGameStateResp.StatusCode != http.StatusOK {
 		t.Fatalf("Expected status OK; got %v\n", getGameStateResp.Status)
 	}

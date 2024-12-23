@@ -5,10 +5,11 @@ package main
 import (
 	"crypto/rand"
 	"encoding/json"
-	"log"
 	"math/big"
 	"net/http"
 	"strconv"
+
+	"log/slog"
 )
 
 const maxId int64 = 1000
@@ -37,7 +38,7 @@ func (a *Api) CreateGame(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
 
-	log.Printf("POST /tables\n") // TODO: Can we simply make this automatic?
+	slog.Info("POST /tables\n") // TODO: Can we simply make this automatic?
 
 	tableId := getRandomId()
 	newGame := NewBlackjack()
@@ -47,11 +48,11 @@ func (a *Api) CreateGame(w http.ResponseWriter, r *http.Request) {
 	resp.TableId = tableId
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(resp); err != nil {
-		log.Printf("Failed to encode response: %v\n", err)
+		slog.Error("Failed to encode response: %v\n", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
-	log.Printf("Created a new game %s\n", tableId)
+	slog.Debug("Created a new game %s\n", tableId)
 }
 
 func (a *Api) GetGameState(w http.ResponseWriter, r *http.Request) {
@@ -59,23 +60,23 @@ func (a *Api) GetGameState(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
 
-	log.Printf("GET /tables/%s\n", r.PathValue("tableId"))
+	slog.Info("GET /tables/%s\n", r.PathValue("tableId"))
 
 	tableId := r.PathValue("tableId")
 	game, ok := a.Games[tableId]
 	if !ok {
-		log.Printf("Game not found: %s\n", tableId)
+		slog.Error("Game not found: %s\n", tableId)
 		http.Error(w, "Game not found", http.StatusNotFound)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(game); err != nil {
-		log.Printf("Failed to encode response: %v\n", err)
+		slog.Error("Failed to encode response: %v\n", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
-	log.Printf("Retrieved game state for %s\n", tableId)
+	slog.Debug("Retrieved game state for %s\n", tableId)
 }
 
 func (a *Api) AddPlayer(w http.ResponseWriter, r *http.Request) {
@@ -83,24 +84,24 @@ func (a *Api) AddPlayer(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
 
-	log.Printf("POST /tables/players/%s\n", r.PathValue("tableId"))
+	slog.Info("POST /tables/players/%s\n", r.PathValue("tableId"))
 
 	tableId := r.PathValue("tableId")
 	game, ok := a.Games[tableId]
 	if !ok {
-		log.Printf("Game not found: %s\n", tableId)
+		slog.Error("Game not found: %s\n", tableId)
 		http.Error(w, "Game not found", http.StatusNotFound)
 		return
 	}
 
 	if len(game.Players) >= maxPlayers {
-		log.Printf("Game is full: %s\n", tableId)
+		slog.Error("Game is full: %s\n", tableId)
 		http.Error(w, "Game is full", http.StatusForbidden)
 		return
 	}
 
 	if game.State != WaitingForPlayers {
-		log.Printf("Game has already started: %s\n", tableId)
+		slog.Error("Game has already started: %s\n", tableId)
 		http.Error(w, "Game has already started", http.StatusForbidden)
 		return
 	}
@@ -112,11 +113,11 @@ func (a *Api) AddPlayer(w http.ResponseWriter, r *http.Request) {
 	resp.PlayerId = playerId
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(resp); err != nil {
-		log.Printf("Failed to encode response: %v\n", err)
+		slog.Error("Failed to encode response: %v\n", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
-	log.Printf("Added player %s to game %s\n", playerId, tableId)
+	slog.Debug("Added player %s to game %s\n", playerId, tableId)
 }
 
 func (a *Api) TogglePlayerReady(w http.ResponseWriter, r *http.Request) {
@@ -124,12 +125,12 @@ func (a *Api) TogglePlayerReady(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
 
-	log.Printf("POST /tables/ready/%s/%s\n", r.PathValue("tableId"), r.PathValue("playerId"))
+	slog.Info("POST /tables/ready/%s/%s\n", r.PathValue("tableId"), r.PathValue("playerId"))
 
 	tableId := r.PathValue("tableId")
 	game, ok := a.Games[tableId]
 	if !ok {
-		log.Printf("Game not found: %s\n", tableId)
+		slog.Error("Game not found: %s\n", tableId)
 		http.Error(w, "Game not found", http.StatusNotFound)
 		return
 	}
@@ -143,13 +144,13 @@ func (a *Api) TogglePlayerReady(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if playerIndex == -1 {
-		log.Printf("Player not found: %s\n", playerId)
+		slog.Error("Player not found: %s\n", playerId)
 		http.Error(w, "Player not found", http.StatusNotFound)
 		return
 	}
 
 	if game.State != WaitingForPlayers {
-		log.Printf("Game is not waiting for readiness: %s\n", tableId)
+		slog.Error("Game is not waiting for readiness: %s\n", tableId)
 		http.Error(w, "Game is not waiting for readiness", http.StatusForbidden)
 		return
 	}
@@ -158,11 +159,11 @@ func (a *Api) TogglePlayerReady(w http.ResponseWriter, r *http.Request) {
 	player := game.Players[playerIndex]
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(player); err != nil {
-		log.Printf("Failed to encode response: %v\n", err)
+		slog.Error("Failed to encode response: %v\n", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
-	log.Printf("Toggled readiness for player %s\n", playerId)
+	slog.Debug("Toggled readiness for player %s\n", playerId)
 }
 
 // nolint: cyclop
@@ -171,12 +172,12 @@ func (a *Api) PlayerAction(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
 
-	log.Printf("POST /tables/%s/%s?action=%s\n", r.PathValue("tableId"), r.PathValue("playerId"), r.URL.Query().Get("action"))
+	slog.Info("POST /tables/%s/%s?action=%s\n", r.PathValue("tableId"), r.PathValue("playerId"), r.URL.Query().Get("action"))
 
 	tableId := r.PathValue("tableId")
 	game, ok := a.Games[tableId]
 	if !ok {
-		log.Printf("Game not found: %s\n", tableId)
+		slog.Error("Game not found: %s\n", tableId)
 		http.Error(w, "Game not found", http.StatusNotFound)
 		return
 	}
@@ -190,7 +191,7 @@ func (a *Api) PlayerAction(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if playerIndex == -1 {
-		log.Printf("Player not found: %s\n", playerId)
+		slog.Error("Player not found: %s\n", playerId)
 		http.Error(w, "Player not found", http.StatusNotFound)
 		return
 	}
@@ -203,13 +204,13 @@ func (a *Api) PlayerAction(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Invalid action", http.StatusBadRequest)
 			return
 		}
-		log.Printf("Player %s hit\n", playerId)
+		slog.Debug("Player %s hit\n", playerId)
 	case "stand":
 		if !game.PlayerAction(playerIndex, Stand) {
 			http.Error(w, "Invalid action", http.StatusBadRequest)
 			return
 		}
-		log.Printf("Player %s stood\n", playerId)
+		slog.Debug("Player %s stood\n", playerId)
 	default:
 		http.Error(w, "Invalid action", http.StatusBadRequest)
 		return

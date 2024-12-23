@@ -1,0 +1,16 @@
+# TODO: Create a custom image with golangci-lint, push it to Docker Hub, and use it in the pipeline.
+image: dkolaska/blackjack-ci:0.0.1
+
+stages:
+  - test
+
+test:
+  stage: test
+  script:
+    - cd ./backend
+    - go fmt ./...
+    - golangci-lint run
+    - go test ./...
+  rules:
+    - if: $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "main"
+    - if: $CI_COMMIT_BRANCH == "main"

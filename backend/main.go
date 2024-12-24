@@ -8,6 +8,7 @@ import (
 
 // nolint: mnd
 func main() {
+	slog.SetLogLoggerLevel(slog.LevelDebug)
 	api := NewApi()
 	mux := http.NewServeMux()
 	mux.HandleFunc("/tables", api.CreateGame)

@@ -23,7 +23,6 @@ linters:
     - nilnil
     - noctx
     - mnd
-    - perfsprint
     - prealloc
     - predeclared
     - reassign

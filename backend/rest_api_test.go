@@ -10,7 +10,7 @@ import (
 
 func TestCreateGame(t *testing.T) {
 	// Arrange
-	api := NewApi()
+	api := NewRestApi()
 	server := httptest.NewServer(http.HandlerFunc(api.CreateGame))
 
 	// Act
@@ -39,7 +39,7 @@ func TestCreateGame(t *testing.T) {
 
 func TestGetGameState(t *testing.T) {
 	// Arrange
-	api := NewApi()
+	api := NewRestApi()
 	game := NewBlackjack()
 	api.Games["1"] = &game
 
@@ -66,7 +66,7 @@ func TestGetGameState(t *testing.T) {
 
 func TestAddPlayer(t *testing.T) {
 	// Arrange
-	api := NewApi()
+	api := NewRestApi()
 	game := NewBlackjack()
 	api.Games["1"] = &game
 
@@ -92,7 +92,7 @@ func TestAddPlayer(t *testing.T) {
 
 func TestTogglePlayerReadyWhenPlayerNotReady(t *testing.T) {
 	// Arrange
-	api := NewApi()
+	api := NewRestApi()
 	game := NewBlackjack()
 	game.AddPlayer("1", "Player 1")
 	game.State = WaitingForPlayers
@@ -128,7 +128,7 @@ func TestTogglePlayerReadyWhenPlayerNotReady(t *testing.T) {
 
 func TestTogglePlayerReadyWhenPlayerReady(t *testing.T) {
 	// Arrange
-	api := NewApi()
+	api := NewRestApi()
 	game := NewBlackjack()
 	game.AddPlayer("1", "Player 1")
 	game.State = WaitingForPlayers
@@ -165,7 +165,7 @@ func TestTogglePlayerReadyWhenPlayerReady(t *testing.T) {
 
 func TestPlayerHit(t *testing.T) {
 	// Arrange
-	api := NewApi()
+	api := NewRestApi()
 	game := NewBlackjack()
 	game.AddPlayer("1", "Player 1")
 	game.Deal()
@@ -198,7 +198,7 @@ func TestPlayerHit(t *testing.T) {
 
 //nolint:cyclop
 func TestSimpleGame(t *testing.T) {
-	api := NewApi()
+	api := NewRestApi()
 
 	// Create game
 	createGameRequest, err := http.NewRequest(http.MethodPost, "/tables", nil)

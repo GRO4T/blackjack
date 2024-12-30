@@ -16,7 +16,7 @@ import (
 const maxId int64 = 1000
 const maxPlayers = 1
 
-type Api struct {
+type RestApi struct {
 	Games map[string]*Blackjack
 }
 
@@ -28,13 +28,13 @@ type AddPlayerResponse struct {
 	PlayerId string `json:"playerId"`
 }
 
-func NewApi() Api {
-	return Api{
+func NewRestApi() RestApi {
+	return RestApi{
 		Games: map[string]*Blackjack{},
 	}
 }
 
-func (a *Api) CreateGame(w http.ResponseWriter, r *http.Request) {
+func (a *RestApi) CreateGame(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
@@ -54,7 +54,7 @@ func (a *Api) CreateGame(w http.ResponseWriter, r *http.Request) {
 	slog.Debug("Created a new game", "tableId", tableId)
 }
 
-func (a *Api) GetGameState(w http.ResponseWriter, r *http.Request) {
+func (a *RestApi) GetGameState(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
@@ -77,7 +77,7 @@ func (a *Api) GetGameState(w http.ResponseWriter, r *http.Request) {
 	slog.Debug("Retrieved game state", "tableId", tableId)
 }
 
-func (a *Api) AddPlayer(w http.ResponseWriter, r *http.Request) {
+func (a *RestApi) AddPlayer(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
@@ -117,7 +117,7 @@ func (a *Api) AddPlayer(w http.ResponseWriter, r *http.Request) {
 	slog.Debug("Added player to game", "playerId", playerId, "tableId", tableId)
 }
 
-func (a *Api) TogglePlayerReady(w http.ResponseWriter, r *http.Request) {
+func (a *RestApi) TogglePlayerReady(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
@@ -163,7 +163,7 @@ func (a *Api) TogglePlayerReady(w http.ResponseWriter, r *http.Request) {
 }
 
 // nolint: cyclop
-func (a *Api) PlayerAction(w http.ResponseWriter, r *http.Request) {
+func (a *RestApi) PlayerAction(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}

@@ -1,0 +1,14 @@
+syntax = "proto3";
+package bgrpc;
+
+import "google/protobuf/empty.proto";
+
+option go_package = "github.com/GRO4T/blackjack/grpc";
+
+service Blackjack {
+    rpc CreateGame(google.protobuf.Empty) returns (CreateGameResponse);
+}
+
+message CreateGameResponse {
+    string tableId = 1;
+}

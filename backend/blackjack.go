@@ -1,4 +1,4 @@
-// TODO: Change return types to (<type>, error) and handle errors
+// TODO(refactor): Change return types to (<type>, error) and handle errors
 package main
 
 import (
@@ -139,8 +139,8 @@ func (b *Blackjack) PlayerAction(playerNumber int, action Action) bool {
 	}
 
 	// Dealer's turn
-	if b.CurrentPlayer == len(b.Hands) {
-		// TODO: Implement dealer AI
+	if b.CurrentPlayer == len(b.Hands) { // TODO(fix): CurrentPlayer should start from 0
+		// TODO(feat): Implement dealer AI
 		b.State = Finished
 		b.DetermineOutcomes()
 	}

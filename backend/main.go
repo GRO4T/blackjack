@@ -1,3 +1,4 @@
+// TODO: Document the API using Swagger
 package main
 
 import (

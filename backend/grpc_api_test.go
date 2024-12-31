@@ -13,21 +13,23 @@ import (
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
-func TestGrpcServer_CreateGame(t *testing.T) {
-	// Arrange
+// nolint: ireturn
+func Setup_TestGrpcServer(t *testing.T) (*BlackjackGrpcServer, pb.BlackjackClient) {
+	t.Helper()
 	lis := bufconn.Listen(1024 * 1024)
 	t.Cleanup(func() {
 		lis.Close()
 	})
 
-	s := grpc.NewServer()
+	serviceRegistrar := grpc.NewServer()
 	t.Cleanup(func() {
-		s.Stop()
+		serviceRegistrar.Stop()
 	})
-	pb.RegisterBlackjackServer(s, NewGrpcServer())
+	server := NewGrpcServer()
+	pb.RegisterBlackjackServer(serviceRegistrar, server)
 
 	go func() {
-		if err := s.Serve(lis); err != nil {
+		if err := serviceRegistrar.Serve(lis); err != nil {
 			log.Fatalf("Server exited with error: %v", err)
 		}
 	}()
@@ -48,8 +50,15 @@ func TestGrpcServer_CreateGame(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Act
 	client := pb.NewBlackjackClient(conn)
+	return server, client
+}
+
+func TestGrpcServer_CreateGame(t *testing.T) {
+	// Arrange
+	_, client := Setup_TestGrpcServer(t)
+
+	// Act
 	res, err := client.CreateGame(context.Background(), &emptypb.Empty{})
 	if err != nil {
 		t.Fatal(err)
@@ -58,5 +67,157 @@ func TestGrpcServer_CreateGame(t *testing.T) {
 	// Assert
 	if res.TableId == "" {
 		t.Fatal("TableId is empty")
+	}
+}
+
+func TestGrpcServer_GetGameState(t *testing.T) {
+	// Arrange
+	server, client := Setup_TestGrpcServer(t)
+	game := NewBlackjack()
+	game.AddPlayer("1", "Player 1")
+	server.Games["1"] = &game
+
+	// Act
+	res, err := client.GetGameState(context.Background(), &pb.GetGameStateRequest{TableId: "1"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Assert
+	if len(res.Players) != 1 {
+		t.Fatalf("Expected 1 player; got %v", len(res.Players))
+	}
+}
+
+func TestGrpcServer_AddPlayer(t *testing.T) {
+	// Arrange
+	server, client := Setup_TestGrpcServer(t)
+	game := NewBlackjack()
+	server.Games["1"] = &game
+
+	// Act
+	_, err := client.AddPlayer(context.Background(), &pb.AddPlayerRequest{TableId: "1"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Assert
+	if len(server.Games["1"].Players) != 1 {
+		t.Errorf("Expected 1 player; got %v", len(server.Games["1"].Players))
+	}
+}
+
+func TestGrpcServer_TogglePlayerReadyWhenPlayerNotReady(t *testing.T) {
+	// Arrange
+	server, client := Setup_TestGrpcServer(t)
+	game := NewBlackjack()
+	game.AddPlayer("1", "Player 1")
+	server.Games["1"] = &game
+
+	// Act
+	_, err := client.TogglePlayerReady(
+		context.Background(),
+		&pb.TogglePlayerReadyRequest{TableId: "1", PlayerId: "1"},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Assert
+	if !server.Games["1"].Players[0].IsReady {
+		t.Error("Player is not ready")
+	}
+	if server.Games["1"].State != CardsDealt {
+		t.Error("Game is not in CardsDealt state")
+	}
+}
+
+func TestGrpcServer_TogglePlayerReadyWhenPlayerReady(t *testing.T) {
+	// Arrange
+	server, client := Setup_TestGrpcServer(t)
+	game := NewBlackjack()
+	game.AddPlayer("1", "Player 1")
+	server.Games["1"] = &game
+	server.Games["1"].Players[0].IsReady = true
+
+	// Act
+	_, err := client.TogglePlayerReady(
+		context.Background(),
+		&pb.TogglePlayerReadyRequest{TableId: "1", PlayerId: "1"},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Assert
+	if server.Games["1"].Players[0].IsReady {
+		t.Error("Player is ready")
+	}
+}
+
+func TestGrpcServer_PlayerAction(t *testing.T) {
+	// Arrange
+	server, client := Setup_TestGrpcServer(t)
+	game := NewBlackjack()
+	game.AddPlayer("1", "Player 1")
+	game.Deal()
+	game.State = CardsDealt
+	server.Games["1"] = &game
+
+	// Act
+	_, err := client.PlayerAction(
+		context.Background(),
+		&pb.PlayerActionRequest{TableId: "1", PlayerId: "1", Action: pb.Action_HIT},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Assert
+	if len(server.Games["1"].GetPlayerHand(0)) != 3 {
+		t.Errorf("Expected 3 cards; got %v", len(server.Games["1"].GetPlayerHand(0)))
+	}
+}
+
+func TestGrpcServer_SimpleGame(t *testing.T) {
+	_, client := Setup_TestGrpcServer(t)
+	ctx := context.Background()
+
+	// Create game
+	createGameResp, err := client.CreateGame(ctx, &emptypb.Empty{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	tableId := createGameResp.TableId
+
+	// Add player
+	addPlayerResp, err := client.AddPlayer(ctx, &pb.AddPlayerRequest{TableId: tableId})
+	if err != nil {
+		t.Fatal(err)
+	}
+	playerId := addPlayerResp.PlayerId
+
+	// Toggle player ready
+	_, err = client.TogglePlayerReady(ctx, &pb.TogglePlayerReadyRequest{TableId: tableId, PlayerId: playerId})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Player hit
+	_, err = client.PlayerAction(
+		ctx,
+		&pb.PlayerActionRequest{TableId: tableId, PlayerId: playerId, Action: pb.Action_HIT},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Check game outcome
+	gameState, err := client.GetGameState(ctx, &pb.GetGameStateRequest{TableId: tableId})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if gameState.Players[0].Outcome == pb.Outcome_UNDECIDED {
+		t.Error("Expected player outcome to be decided")
 	}
 }

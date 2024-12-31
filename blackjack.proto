@@ -5,10 +5,85 @@ import "google/protobuf/empty.proto";
 
 option go_package = "github.com/GRO4T/blackjack/grpc";
 
+// Service definition
+
 service Blackjack {
     rpc CreateGame(google.protobuf.Empty) returns (CreateGameResponse);
+    rpc GetGameState(GetGameStateRequest) returns (GetGameStateResponse);
+    rpc AddPlayer(AddPlayerRequest) returns (AddPlayerResponse);
+    rpc TogglePlayerReady(TogglePlayerReadyRequest) returns (Player);
+    rpc PlayerAction(PlayerActionRequest) returns (google.protobuf.Empty);
 }
+
+// Helper types
+
+enum Outcome {
+    UNDECIDED = 0;
+    WIN = 1;
+    LOSE = 2;
+    PUSH = 3;
+}
+
+enum State {
+    WAITING_FOR_PLAYERS = 0;
+    CARDS_DEALT = 1;
+    FINISHED = 2;
+}
+
+message Player {
+    string name = 1;
+    bool isReady = 2;
+    int32 chips = 3;
+    int32 bet = 4;
+    Outcome outcome = 5; 
+}
+
+message Card {
+    int32 rank = 1;
+    int32 suit = 2;
+}
+
+message Hand {
+    repeated Card cards = 1;
+}
+
+enum Action {
+    HIT = 0;
+    STAND = 1;
+}
+
+// Messages
 
 message CreateGameResponse {
     string tableId = 1;
+}
+
+message GetGameStateRequest {
+    string tableId = 1;
+}
+
+message GetGameStateResponse {
+    repeated Hand hands = 1;
+    repeated Player players = 2;
+    State state = 3;
+    int32 currentPlayer = 4;
+}
+
+message AddPlayerRequest {
+    string tableId = 1;    
+}
+
+message AddPlayerResponse {
+    string playerId = 1;
+}
+
+message TogglePlayerReadyRequest {
+    string tableId = 1;
+    string playerId = 2;
+}
+
+message PlayerActionRequest {
+    string tableId = 1;
+    string playerId = 2;
+    Action action = 3;
 }

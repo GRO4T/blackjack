@@ -91,6 +91,7 @@ func (a *RestApi) AddPlayer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// TODO(refactor): Move this check to the game object
 	if len(game.Players) >= maxPlayers {
 		slog.Error("Game is full", "tableId", tableId)
 		http.Error(w, "Game is full", http.StatusForbidden)

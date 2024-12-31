@@ -13,6 +13,12 @@ build:
 install:
 	cd $(SERVER_DIR) && go install
 
+test:
+	cd $(SERVER_DIR) && go test ./...
+
+lint:
+	cd $(SERVER_DIR) && golangci-lint run
+
 clean:
 	rm -f $(PROTO_OUT) $(EXECUTABLE)
 

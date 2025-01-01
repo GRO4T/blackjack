@@ -1,8 +1,8 @@
 # TODO: Rename blackjack to bjackapi
 SERVER_DIR=./backend
 PROTO_IN=./blackjack.proto
-PROTO_OUT_DIR=./backend/grpc
-PROTO_OUT=./backend/grpc/blackjack.pb.go ./backend/grpc/blackjack_grpc.pb.go
+PROTO_OUT_DIR=./backend/proto
+PROTO_OUT=./backend/proto/blackjack.pb.go ./backend/proto/blackjack_grpc.pb.go
 EXECUTABLE=./backend/blackjack
 
 all: proto build

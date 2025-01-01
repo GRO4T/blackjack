@@ -1,34 +1,39 @@
-package main
+package grpc
 
 import (
 	"context"
+	"crypto/rand"
+	"math/big"
+	"strconv"
 
-	pb "github.com/GRO4T/blackjack/grpc"
+	"github.com/GRO4T/blackjack/blackjack"
+	"github.com/GRO4T/blackjack/constant"
+	pb "github.com/GRO4T/blackjack/proto"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
-type BlackjackGrpcServer struct {
+type BlackjackServer struct {
 	pb.UnimplementedBlackjackServer
-	Games map[string]*Blackjack
+	Games map[string]*blackjack.Blackjack
 }
 
-func NewGrpcServer() *BlackjackGrpcServer {
-	return &BlackjackGrpcServer{
-		Games: map[string]*Blackjack{},
+func NewServer() *BlackjackServer {
+	return &BlackjackServer{
+		Games: map[string]*blackjack.Blackjack{},
 	}
 }
 
-func (s *BlackjackGrpcServer) CreateGame(context.Context, *emptypb.Empty) (*pb.CreateGameResponse, error) {
+func (s *BlackjackServer) CreateGame(context.Context, *emptypb.Empty) (*pb.CreateGameResponse, error) {
 	tableId := getRandomId()
-	newGame := NewBlackjack()
+	newGame := blackjack.New()
 	s.Games[tableId] = &newGame
 	return &pb.CreateGameResponse{TableId: tableId}, nil
 }
 
 // nolint: gosec
-func (s *BlackjackGrpcServer) GetGameState(c context.Context, r *pb.GetGameStateRequest) (*pb.GetGameStateResponse, error) {
+func (s *BlackjackServer) GetGameState(c context.Context, r *pb.GetGameStateRequest) (*pb.GetGameStateResponse, error) {
 	game, ok := s.Games[r.TableId]
 	if !ok {
 		return nil, status.Errorf(codes.NotFound, "Game not found")
@@ -65,16 +70,16 @@ func (s *BlackjackGrpcServer) GetGameState(c context.Context, r *pb.GetGameState
 	}, nil
 }
 
-func (s *BlackjackGrpcServer) AddPlayer(c context.Context, r *pb.AddPlayerRequest) (*pb.AddPlayerResponse, error) {
+func (s *BlackjackServer) AddPlayer(c context.Context, r *pb.AddPlayerRequest) (*pb.AddPlayerResponse, error) {
 	game, ok := s.Games[r.TableId]
 
 	if !ok {
 		return nil, status.Errorf(codes.NotFound, "Game not found")
 	}
-	if len(game.Players) >= maxPlayers {
+	if len(game.Players) >= constant.MaxPlayers {
 		return nil, status.Errorf(codes.FailedPrecondition, "Game is full")
 	}
-	if game.State != WaitingForPlayers {
+	if game.State != blackjack.WaitingForPlayers {
 		return nil, status.Errorf(codes.FailedPrecondition, "Game has already started")
 	}
 
@@ -84,7 +89,7 @@ func (s *BlackjackGrpcServer) AddPlayer(c context.Context, r *pb.AddPlayerReques
 }
 
 // nolint: gosec
-func (s *BlackjackGrpcServer) TogglePlayerReady(c context.Context, r *pb.TogglePlayerReadyRequest) (*pb.Player, error) {
+func (s *BlackjackServer) TogglePlayerReady(c context.Context, r *pb.TogglePlayerReadyRequest) (*pb.Player, error) {
 	game, ok := s.Games[r.TableId]
 	if !ok {
 		return nil, status.Errorf(codes.NotFound, "Game not found")
@@ -101,7 +106,7 @@ func (s *BlackjackGrpcServer) TogglePlayerReady(c context.Context, r *pb.ToggleP
 		return nil, status.Errorf(codes.NotFound, "Player not found")
 	}
 
-	if game.State != WaitingForPlayers {
+	if game.State != blackjack.WaitingForPlayers {
 		return nil, status.Errorf(codes.FailedPrecondition, "Game is not waiting for readiness")
 	}
 
@@ -116,7 +121,7 @@ func (s *BlackjackGrpcServer) TogglePlayerReady(c context.Context, r *pb.ToggleP
 	}, nil
 }
 
-func (s *BlackjackGrpcServer) PlayerAction(c context.Context, r *pb.PlayerActionRequest) (*emptypb.Empty, error) {
+func (s *BlackjackServer) PlayerAction(c context.Context, r *pb.PlayerActionRequest) (*emptypb.Empty, error) {
 	game, ok := s.Games[r.TableId]
 	if !ok {
 		return nil, status.Errorf(codes.NotFound, "Game not found")
@@ -135,14 +140,22 @@ func (s *BlackjackGrpcServer) PlayerAction(c context.Context, r *pb.PlayerAction
 
 	switch r.Action {
 	case pb.Action_HIT:
-		if !game.PlayerAction(playerIndex, Hit) {
+		if !game.PlayerAction(playerIndex, blackjack.Hit) {
 			return nil, status.Errorf(codes.FailedPrecondition, "Invalid action")
 		}
 	case pb.Action_STAND:
-		if !game.PlayerAction(playerIndex, Stand) {
+		if !game.PlayerAction(playerIndex, blackjack.Stand) {
 			return nil, status.Errorf(codes.FailedPrecondition, "Invalid action")
 		}
 	}
 
 	return &emptypb.Empty{}, nil
+}
+
+func getRandomId() string {
+	id, err := rand.Int(rand.Reader, big.NewInt(constant.MaxId))
+	if err != nil {
+		panic(err)
+	}
+	return strconv.Itoa(int(id.Int64()))
 }

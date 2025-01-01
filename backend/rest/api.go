@@ -1,6 +1,6 @@
 // TODO: Improve the file structure (types and functions are mixed up)
 
-package main
+package rest
 
 import (
 	"crypto/rand"
@@ -11,13 +11,13 @@ import (
 	"strconv"
 
 	"log/slog"
+
+	"github.com/GRO4T/blackjack/blackjack"
+	"github.com/GRO4T/blackjack/constant"
 )
 
-const maxId int64 = 1000
-const maxPlayers = 1
-
 type RestApi struct {
-	Games map[string]*Blackjack
+	Games map[string]*blackjack.Blackjack
 }
 
 type CreateGameResponse struct {
@@ -28,9 +28,9 @@ type AddPlayerResponse struct {
 	PlayerId string `json:"playerId"`
 }
 
-func NewRestApi() RestApi {
+func NewApi() RestApi {
 	return RestApi{
-		Games: map[string]*Blackjack{},
+		Games: map[string]*blackjack.Blackjack{},
 	}
 }
 
@@ -40,7 +40,7 @@ func (a *RestApi) CreateGame(w http.ResponseWriter, r *http.Request) {
 	}
 
 	tableId := getRandomId()
-	newGame := NewBlackjack()
+	newGame := blackjack.New()
 	a.Games[tableId] = &newGame
 
 	var resp CreateGameResponse
@@ -92,13 +92,13 @@ func (a *RestApi) AddPlayer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// TODO(refactor): Move this check to the game object
-	if len(game.Players) >= maxPlayers {
+	if len(game.Players) >= constant.MaxPlayers {
 		slog.Error("Game is full", "tableId", tableId)
 		http.Error(w, "Game is full", http.StatusForbidden)
 		return
 	}
 
-	if game.State != WaitingForPlayers {
+	if game.State != blackjack.WaitingForPlayers {
 		slog.Error("Game has already started", "tableId", tableId)
 		http.Error(w, "Game has already started", http.StatusForbidden)
 		return
@@ -146,7 +146,7 @@ func (a *RestApi) TogglePlayerReady(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if game.State != WaitingForPlayers {
+	if game.State != blackjack.WaitingForPlayers {
 		slog.Error("Game is not waiting for readiness", "tableId", tableId)
 		http.Error(w, "Game is not waiting for readiness", http.StatusForbidden)
 		return
@@ -196,13 +196,13 @@ func (a *RestApi) PlayerAction(w http.ResponseWriter, r *http.Request) {
 
 	switch action {
 	case "hit":
-		if !game.PlayerAction(playerIndex, Hit) {
+		if !game.PlayerAction(playerIndex, blackjack.Hit) {
 			http.Error(w, "Invalid action", http.StatusBadRequest)
 			return
 		}
 		slog.Debug("Player hit", "playerId", playerId)
 	case "stand":
-		if !game.PlayerAction(playerIndex, Stand) {
+		if !game.PlayerAction(playerIndex, blackjack.Stand) {
 			http.Error(w, "Invalid action", http.StatusBadRequest)
 			return
 		}
@@ -214,7 +214,7 @@ func (a *RestApi) PlayerAction(w http.ResponseWriter, r *http.Request) {
 }
 
 func getRandomId() string {
-	id, err := rand.Int(rand.Reader, big.NewInt(maxId))
+	id, err := rand.Int(rand.Reader, big.NewInt(constant.MaxId))
 	if err != nil {
 		panic(err)
 	}

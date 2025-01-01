@@ -1,5 +1,5 @@
 // TODO(refactor): Change return types to (<type>, error) and handle errors
-package main
+package blackjack
 
 import (
 	"github.com/GRO4T/blackjack/deck"
@@ -61,7 +61,7 @@ func NewPlayer(id string, name string) Player {
 	}
 }
 
-func NewBlackjack() Blackjack {
+func New() Blackjack {
 	dealerHand := []deck.Card{}
 	return Blackjack{
 		Deck:          deck.New(deck.WithShuffle()),

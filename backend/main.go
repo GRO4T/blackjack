@@ -9,7 +9,9 @@ import (
 	"net/http"
 	"time"
 
-	pb "github.com/GRO4T/blackjack/grpc"
+	bgrpc "github.com/GRO4T/blackjack/grpc"
+	pb "github.com/GRO4T/blackjack/proto"
+	"github.com/GRO4T/blackjack/rest"
 	"google.golang.org/grpc"
 )
 
@@ -23,7 +25,7 @@ func grpcServer() {
 		slog.Error(fmt.Sprintf("Failed to listen: %v", err))
 	}
 	s := grpc.NewServer()
-	pb.RegisterBlackjackServer(s, NewGrpcServer())
+	pb.RegisterBlackjackServer(s, bgrpc.NewServer())
 	slog.Info(fmt.Sprintf("Starting gRPC server on %s", ServerAddr))
 	if err := s.Serve(listener); err != nil {
 		slog.Error(fmt.Sprintf("Failed to serve: %v", err))
@@ -32,7 +34,7 @@ func grpcServer() {
 
 // nolint: mnd
 func restApiServer() {
-	api := NewRestApi()
+	api := rest.NewApi()
 	mux := http.NewServeMux()
 	mux.HandleFunc("/tables", api.CreateGame)
 	mux.HandleFunc("/tables/{tableId}", api.GetGameState)

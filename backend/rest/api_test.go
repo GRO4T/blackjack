@@ -1,16 +1,19 @@
 // nolint: noctx
-package main
+package rest_test
 
 import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/GRO4T/blackjack/blackjack"
+	"github.com/GRO4T/blackjack/rest"
 )
 
 func TestCreateGame(t *testing.T) {
 	// Arrange
-	api := NewRestApi()
+	api := rest.NewApi()
 	server := httptest.NewServer(http.HandlerFunc(api.CreateGame))
 
 	// Act
@@ -39,8 +42,8 @@ func TestCreateGame(t *testing.T) {
 
 func TestGetGameState(t *testing.T) {
 	// Arrange
-	api := NewRestApi()
-	game := NewBlackjack()
+	api := rest.NewApi()
+	game := blackjack.New()
 	api.Games["1"] = &game
 
 	// Act
@@ -58,7 +61,7 @@ func TestGetGameState(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("Expected status OK; got %v\n", resp.Status)
 	}
-	var gameState Blackjack
+	var gameState blackjack.Blackjack
 	if err := json.NewDecoder(resp.Body).Decode(&gameState); err != nil {
 		t.Fatal(err)
 	}
@@ -66,8 +69,8 @@ func TestGetGameState(t *testing.T) {
 
 func TestAddPlayer(t *testing.T) {
 	// Arrange
-	api := NewRestApi()
-	game := NewBlackjack()
+	api := rest.NewApi()
+	game := blackjack.New()
 	api.Games["1"] = &game
 
 	// Act
@@ -92,10 +95,10 @@ func TestAddPlayer(t *testing.T) {
 
 func TestTogglePlayerReadyWhenPlayerNotReady(t *testing.T) {
 	// Arrange
-	api := NewRestApi()
-	game := NewBlackjack()
+	api := rest.NewApi()
+	game := blackjack.New()
 	game.AddPlayer("1", "Player 1")
-	game.State = WaitingForPlayers
+	game.State = blackjack.WaitingForPlayers // TODO: Check if necessary
 	api.Games["1"] = &game
 
 	// Act
@@ -114,24 +117,24 @@ func TestTogglePlayerReadyWhenPlayerNotReady(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("Expected status OK; got %v\n", resp.Status)
 	}
-	var player Player
+	var player blackjack.Player
 	if err := json.NewDecoder(resp.Body).Decode(&player); err != nil {
 		t.Fatal(err)
 	}
 	if !player.IsReady {
 		t.Error("Expected player to be ready")
 	}
-	if game.State != CardsDealt {
+	if game.State != blackjack.CardsDealt {
 		t.Error("Expected game to be in CardsDealt state")
 	}
 }
 
 func TestTogglePlayerReadyWhenPlayerReady(t *testing.T) {
 	// Arrange
-	api := NewRestApi()
-	game := NewBlackjack()
+	api := rest.NewApi()
+	game := blackjack.New()
 	game.AddPlayer("1", "Player 1")
-	game.State = WaitingForPlayers
+	game.State = blackjack.WaitingForPlayers
 	api.Games["1"] = &game
 	api.Games["1"].Players[0].IsReady = true
 
@@ -151,25 +154,25 @@ func TestTogglePlayerReadyWhenPlayerReady(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("Expected status OK; got %v\n", resp.Status)
 	}
-	var player Player
+	var player blackjack.Player
 	if err := json.NewDecoder(resp.Body).Decode(&player); err != nil {
 		t.Fatal(err)
 	}
 	if player.IsReady {
 		t.Error("Expected player to be not ready")
 	}
-	if game.State != WaitingForPlayers {
+	if game.State != blackjack.WaitingForPlayers {
 		t.Error("Expected game to be in WaitingForPlayers state")
 	}
 }
 
 func TestPlayerHit(t *testing.T) {
 	// Arrange
-	api := NewRestApi()
-	game := NewBlackjack()
+	api := rest.NewApi()
+	game := blackjack.New()
 	game.AddPlayer("1", "Player 1")
 	game.Deal()
-	game.State = CardsDealt
+	game.State = blackjack.CardsDealt
 	api.Games["1"] = &game
 
 	// Act
@@ -198,7 +201,7 @@ func TestPlayerHit(t *testing.T) {
 
 //nolint:cyclop
 func TestSimpleGame(t *testing.T) {
-	api := NewRestApi()
+	api := rest.NewApi()
 
 	// Create game
 	createGameRequest, err := http.NewRequest(http.MethodPost, "/tables", nil)
@@ -212,7 +215,7 @@ func TestSimpleGame(t *testing.T) {
 	if createGameResp.StatusCode != http.StatusOK {
 		t.Fatalf("Expected status OK; got %v\n", createGameResp.Status)
 	}
-	var createGameRespBody CreateGameResponse
+	var createGameRespBody rest.CreateGameResponse
 	if err := json.NewDecoder(createGameResp.Body).Decode(&createGameRespBody); err != nil {
 		t.Fatal(err)
 	}
@@ -231,7 +234,7 @@ func TestSimpleGame(t *testing.T) {
 	if addPlayerResp.StatusCode != http.StatusOK {
 		t.Fatalf("Expected status OK; got %v\n", addPlayerResp.Status)
 	}
-	var addPlayerRespBody AddPlayerResponse
+	var addPlayerRespBody rest.AddPlayerResponse
 	if err := json.NewDecoder(addPlayerResp.Body).Decode(&addPlayerRespBody); err != nil {
 		t.Fatal(err)
 	}
@@ -280,11 +283,11 @@ func TestSimpleGame(t *testing.T) {
 	if getGameStateResp.StatusCode != http.StatusOK {
 		t.Fatalf("Expected status OK; got %v\n", getGameStateResp.Status)
 	}
-	var gameState Blackjack
+	var gameState blackjack.Blackjack
 	if err := json.NewDecoder(getGameStateResp.Body).Decode(&gameState); err != nil {
 		t.Fatal(err)
 	}
-	if gameState.Players[0].Outcome == Undecided {
+	if gameState.Players[0].Outcome == blackjack.Undecided {
 		t.Error("Expected player outcome to be decided")
 	}
 }

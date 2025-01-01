@@ -1,4 +1,4 @@
-package main
+package grpc_test
 
 import (
 	"context"
@@ -6,7 +6,9 @@ import (
 	"net"
 	"testing"
 
-	pb "github.com/GRO4T/blackjack/grpc"
+	"github.com/GRO4T/blackjack/blackjack"
+	bgrpc "github.com/GRO4T/blackjack/grpc"
+	pb "github.com/GRO4T/blackjack/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/test/bufconn"
@@ -14,7 +16,7 @@ import (
 )
 
 // nolint: ireturn
-func Setup_TestGrpcServer(t *testing.T) (*BlackjackGrpcServer, pb.BlackjackClient) {
+func Setup(t *testing.T) (*bgrpc.BlackjackServer, pb.BlackjackClient) {
 	t.Helper()
 	lis := bufconn.Listen(1024 * 1024)
 	t.Cleanup(func() {
@@ -25,7 +27,7 @@ func Setup_TestGrpcServer(t *testing.T) (*BlackjackGrpcServer, pb.BlackjackClien
 	t.Cleanup(func() {
 		serviceRegistrar.Stop()
 	})
-	server := NewGrpcServer()
+	server := bgrpc.NewServer()
 	pb.RegisterBlackjackServer(serviceRegistrar, server)
 
 	go func() {
@@ -54,9 +56,9 @@ func Setup_TestGrpcServer(t *testing.T) (*BlackjackGrpcServer, pb.BlackjackClien
 	return server, client
 }
 
-func TestGrpcServer_CreateGame(t *testing.T) {
+func TestGrpcApi_CreateGame(t *testing.T) {
 	// Arrange
-	_, client := Setup_TestGrpcServer(t)
+	_, client := Setup(t)
 
 	// Act
 	res, err := client.CreateGame(context.Background(), &emptypb.Empty{})
@@ -70,10 +72,10 @@ func TestGrpcServer_CreateGame(t *testing.T) {
 	}
 }
 
-func TestGrpcServer_GetGameState(t *testing.T) {
+func TestGrpcApi_GetGameState(t *testing.T) {
 	// Arrange
-	server, client := Setup_TestGrpcServer(t)
-	game := NewBlackjack()
+	server, client := Setup(t)
+	game := blackjack.New()
 	game.AddPlayer("1", "Player 1")
 	server.Games["1"] = &game
 
@@ -89,10 +91,10 @@ func TestGrpcServer_GetGameState(t *testing.T) {
 	}
 }
 
-func TestGrpcServer_AddPlayer(t *testing.T) {
+func TestGrpcApi_AddPlayer(t *testing.T) {
 	// Arrange
-	server, client := Setup_TestGrpcServer(t)
-	game := NewBlackjack()
+	server, client := Setup(t)
+	game := blackjack.New()
 	server.Games["1"] = &game
 
 	// Act
@@ -107,10 +109,10 @@ func TestGrpcServer_AddPlayer(t *testing.T) {
 	}
 }
 
-func TestGrpcServer_TogglePlayerReadyWhenPlayerNotReady(t *testing.T) {
+func TestGrpcApi_TogglePlayerReadyWhenPlayerNotReady(t *testing.T) {
 	// Arrange
-	server, client := Setup_TestGrpcServer(t)
-	game := NewBlackjack()
+	server, client := Setup(t)
+	game := blackjack.New()
 	game.AddPlayer("1", "Player 1")
 	server.Games["1"] = &game
 
@@ -127,15 +129,15 @@ func TestGrpcServer_TogglePlayerReadyWhenPlayerNotReady(t *testing.T) {
 	if !server.Games["1"].Players[0].IsReady {
 		t.Error("Player is not ready")
 	}
-	if server.Games["1"].State != CardsDealt {
+	if server.Games["1"].State != blackjack.CardsDealt {
 		t.Error("Game is not in CardsDealt state")
 	}
 }
 
-func TestGrpcServer_TogglePlayerReadyWhenPlayerReady(t *testing.T) {
+func TestGrpcApi_TogglePlayerReadyWhenPlayerReady(t *testing.T) {
 	// Arrange
-	server, client := Setup_TestGrpcServer(t)
-	game := NewBlackjack()
+	server, client := Setup(t)
+	game := blackjack.New()
 	game.AddPlayer("1", "Player 1")
 	server.Games["1"] = &game
 	server.Games["1"].Players[0].IsReady = true
@@ -155,13 +157,13 @@ func TestGrpcServer_TogglePlayerReadyWhenPlayerReady(t *testing.T) {
 	}
 }
 
-func TestGrpcServer_PlayerAction(t *testing.T) {
+func TestGrpcApi_PlayerAction(t *testing.T) {
 	// Arrange
-	server, client := Setup_TestGrpcServer(t)
-	game := NewBlackjack()
+	server, client := Setup(t)
+	game := blackjack.New()
 	game.AddPlayer("1", "Player 1")
 	game.Deal()
-	game.State = CardsDealt
+	game.State = blackjack.CardsDealt
 	server.Games["1"] = &game
 
 	// Act
@@ -179,8 +181,8 @@ func TestGrpcServer_PlayerAction(t *testing.T) {
 	}
 }
 
-func TestGrpcServer_SimpleGame(t *testing.T) {
-	_, client := Setup_TestGrpcServer(t)
+func TestGrpcApi_SimpleGame(t *testing.T) {
+	_, client := Setup(t)
 	ctx := context.Background()
 
 	// Create game

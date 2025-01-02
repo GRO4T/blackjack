@@ -72,20 +72,14 @@ func (s *BlackjackServer) GetGameState(c context.Context, r *pb.GetGameStateRequ
 
 func (s *BlackjackServer) AddPlayer(c context.Context, r *pb.AddPlayerRequest) (*pb.AddPlayerResponse, error) {
 	game, ok := s.Games[r.TableId]
-
 	if !ok {
 		return nil, status.Errorf(codes.NotFound, "Game not found")
 	}
-	if len(game.Players) >= constant.MaxPlayers {
-		return nil, status.Errorf(codes.FailedPrecondition, "Game is full")
+	newPlayer, err := game.AddPlayer("Bob")
+	if err != nil {
+		return nil, status.Errorf(codes.FailedPrecondition, "Failed to add player: %v", err)
 	}
-	if game.State != blackjack.WaitingForPlayers {
-		return nil, status.Errorf(codes.FailedPrecondition, "Game has already started")
-	}
-
-	playerId := getRandomId()
-	game.AddPlayer(playerId, "Bob")
-	return &pb.AddPlayerResponse{PlayerId: playerId}, nil
+	return &pb.AddPlayerResponse{PlayerId: newPlayer.Id}, nil
 }
 
 // nolint: gosec
@@ -95,23 +89,11 @@ func (s *BlackjackServer) TogglePlayerReady(c context.Context, r *pb.TogglePlaye
 		return nil, status.Errorf(codes.NotFound, "Game not found")
 	}
 
-	playerIndex := -1
-	for i, p := range game.Players { // TODO(refactor): Change players to map
-		if p.Id == r.PlayerId {
-			playerIndex = i
-			break
-		}
-	}
-	if playerIndex == -1 {
-		return nil, status.Errorf(codes.NotFound, "Player not found")
+	player, err := game.TogglePlayerReady(r.PlayerId)
+	if err != nil {
+		return nil, status.Errorf(codes.FailedPrecondition, "Failed to toggle readiness: %v", err)
 	}
 
-	if game.State != blackjack.WaitingForPlayers {
-		return nil, status.Errorf(codes.FailedPrecondition, "Game is not waiting for readiness")
-	}
-
-	game.TogglePlayerReady(r.PlayerId)
-	player := game.Players[playerIndex]
 	return &pb.Player{
 		Name:    player.Name,
 		IsReady: player.IsReady,
@@ -127,24 +109,13 @@ func (s *BlackjackServer) PlayerAction(c context.Context, r *pb.PlayerActionRequ
 		return nil, status.Errorf(codes.NotFound, "Game not found")
 	}
 
-	playerIndex := -1
-	for i, p := range game.Players {
-		if p.Id == r.PlayerId {
-			playerIndex = i
-			break
-		}
-	}
-	if playerIndex == -1 {
-		return nil, status.Errorf(codes.NotFound, "Player not found")
-	}
-
 	switch r.Action {
 	case pb.Action_HIT:
-		if !game.PlayerAction(playerIndex, blackjack.Hit) {
+		if err := game.PlayerAction(r.PlayerId, blackjack.Hit); err != nil {
 			return nil, status.Errorf(codes.FailedPrecondition, "Invalid action")
 		}
 	case pb.Action_STAND:
-		if !game.PlayerAction(playerIndex, blackjack.Stand) {
+		if err := game.PlayerAction(r.PlayerId, blackjack.Stand); err != nil {
 			return nil, status.Errorf(codes.FailedPrecondition, "Invalid action")
 		}
 	}

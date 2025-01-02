@@ -2,7 +2,22 @@
 package blackjack
 
 import (
+	"crypto/rand"
+	"errors"
+	"math/big"
+	"strconv"
+
+	"github.com/GRO4T/blackjack/constant"
 	"github.com/GRO4T/blackjack/deck"
+)
+
+var (
+	ErrNotFound           = errors.New("not found")
+	ErrGameIsFull         = errors.New("game is full")
+	ErrGameAlreadyStarted = errors.New("game already started")
+	ErrCardsAlreadyDealt  = errors.New("cards already dealt")
+	ErrGameNotInProgress  = errors.New("game not in progress")
+	ErrOtherPlayerTurn    = errors.New("other player's turn")
 )
 
 const (
@@ -72,37 +87,54 @@ func New() Blackjack {
 	}
 }
 
-func (b *Blackjack) AddPlayer(id string, name string) {
+func (b *Blackjack) AddPlayer(name string) (*Player, error) {
 	if b.State != WaitingForPlayers {
-		return
+		return nil, ErrGameAlreadyStarted
 	}
-	newPlayer := NewPlayer(id, name)
+	if len(b.Players) >= constant.MaxPlayers {
+		return nil, ErrGameIsFull
+	}
+	newPlayer := NewPlayer(getRandomId(), name)
 	b.Players = append(b.Players, &newPlayer)
 	b.Hands = append(b.Hands, []deck.Card{})
+	return &newPlayer, nil
 }
 
-func (b *Blackjack) TogglePlayerReady(playerId string) {
+func (b *Blackjack) TogglePlayerReady(playerId string) (*Player, error) {
 	if b.State != WaitingForPlayers {
-		return
+		return nil, ErrGameAlreadyStarted
 	}
+
+	var targetPlayer *Player = nil
 	allPlayersReady := true
 	for _, player := range b.Players {
 		if player.Id == playerId {
 			player.IsReady = !player.IsReady
+			targetPlayer = player
 		}
 		if !player.IsReady {
 			allPlayersReady = false
 		}
 	}
+
+	if targetPlayer == nil {
+		return nil, ErrNotFound
+	}
+
 	if allPlayersReady {
-		b.Deal()
+		err := b.Deal()
+		if err != nil {
+			return nil, err
+		}
 		b.State = CardsDealt
 	}
+
+	return targetPlayer, nil
 }
 
-func (b *Blackjack) Deal() {
+func (b *Blackjack) Deal() error {
 	if b.State == CardsDealt {
-		return
+		return ErrCardsAlreadyDealt
 	}
 	for range 2 {
 		for player := 0; player < len(b.Hands); player++ {
@@ -110,6 +142,7 @@ func (b *Blackjack) Deal() {
 			b.Deck = b.Deck[1:]
 		}
 	}
+	return nil
 }
 
 func (b *Blackjack) GetPlayerCount() int {
@@ -124,14 +157,29 @@ func (b *Blackjack) GetDealerHand() []deck.Card {
 	return b.Hands[0]
 }
 
-func (b *Blackjack) PlayerAction(playerNumber int, action Action) bool {
-	if b.State != CardsDealt || playerNumber+1 != b.CurrentPlayer {
-		return false
+func (b *Blackjack) PlayerAction(playerId string, action Action) error {
+	if b.State != CardsDealt {
+		return ErrGameNotInProgress
+	}
+
+	playerIndex := -1
+	for i, p := range b.Players {
+		if p.Id == playerId {
+			playerIndex = i
+			break
+		}
+	}
+	if playerIndex == -1 {
+		return ErrNotFound
+	}
+
+	if playerIndex+1 != b.CurrentPlayer {
+		return ErrOtherPlayerTurn
 	}
 
 	switch action {
 	case Hit:
-		b.Hands[playerNumber+1] = append(b.Hands[playerNumber+1], b.Deck[0])
+		b.Hands[playerIndex+1] = append(b.Hands[playerIndex+1], b.Deck[0])
 		b.Deck = b.Deck[1:]
 		b.CurrentPlayer++
 	case Stand:
@@ -145,7 +193,7 @@ func (b *Blackjack) PlayerAction(playerNumber int, action Action) bool {
 		b.DetermineOutcomes()
 	}
 
-	return true
+	return nil
 }
 
 func (b *Blackjack) DetermineOutcomes() {
@@ -222,4 +270,12 @@ func isBlackjack(hand []deck.Card) bool {
 			hand[i].Rank == deck.King
 	}
 	return (isAce(0) && isTenOrQKJ(1)) || (isAce(1) && isTenOrQKJ(0))
+}
+
+func getRandomId() string {
+	id, err := rand.Int(rand.Reader, big.NewInt(constant.MaxId))
+	if err != nil {
+		panic(err)
+	}
+	return strconv.Itoa(int(id.Int64()))
 }

@@ -76,7 +76,10 @@ func TestGrpcApi_GetGameState(t *testing.T) {
 	// Arrange
 	server, client := Setup(t)
 	game := blackjack.New()
-	game.AddPlayer("1", "Player 1")
+	_, err := game.AddPlayer("Player 1")
+	if err != nil {
+		t.Fatal(err)
+	}
 	server.Games["1"] = &game
 
 	// Act
@@ -113,13 +116,13 @@ func TestGrpcApi_TogglePlayerReadyWhenPlayerNotReady(t *testing.T) {
 	// Arrange
 	server, client := Setup(t)
 	game := blackjack.New()
-	game.AddPlayer("1", "Player 1")
+	newPlayer, _ := game.AddPlayer("Player 1")
 	server.Games["1"] = &game
 
 	// Act
 	_, err := client.TogglePlayerReady(
 		context.Background(),
-		&pb.TogglePlayerReadyRequest{TableId: "1", PlayerId: "1"},
+		&pb.TogglePlayerReadyRequest{TableId: "1", PlayerId: newPlayer.Id},
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -138,14 +141,14 @@ func TestGrpcApi_TogglePlayerReadyWhenPlayerReady(t *testing.T) {
 	// Arrange
 	server, client := Setup(t)
 	game := blackjack.New()
-	game.AddPlayer("1", "Player 1")
+	newPlayer, _ := game.AddPlayer("Player 1")
 	server.Games["1"] = &game
 	server.Games["1"].Players[0].IsReady = true
 
 	// Act
 	_, err := client.TogglePlayerReady(
 		context.Background(),
-		&pb.TogglePlayerReadyRequest{TableId: "1", PlayerId: "1"},
+		&pb.TogglePlayerReadyRequest{TableId: "1", PlayerId: newPlayer.Id},
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -161,15 +164,18 @@ func TestGrpcApi_PlayerAction(t *testing.T) {
 	// Arrange
 	server, client := Setup(t)
 	game := blackjack.New()
-	game.AddPlayer("1", "Player 1")
-	game.Deal()
+	newPlayer, _ := game.AddPlayer("Player 1")
+	err := game.Deal()
+	if err != nil {
+		t.Fatal(err)
+	}
 	game.State = blackjack.CardsDealt
 	server.Games["1"] = &game
 
 	// Act
-	_, err := client.PlayerAction(
+	_, err = client.PlayerAction(
 		context.Background(),
-		&pb.PlayerActionRequest{TableId: "1", PlayerId: "1", Action: pb.Action_HIT},
+		&pb.PlayerActionRequest{TableId: "1", PlayerId: newPlayer.Id, Action: pb.Action_HIT},
 	)
 	if err != nil {
 		t.Fatal(err)

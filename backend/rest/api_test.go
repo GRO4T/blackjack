@@ -97,7 +97,7 @@ func TestTogglePlayerReadyWhenPlayerNotReady(t *testing.T) {
 	// Arrange
 	api := rest.NewApi()
 	game := blackjack.New()
-	game.AddPlayer("1", "Player 1")
+	newPlayer, _ := game.AddPlayer("Player 1")
 	game.State = blackjack.WaitingForPlayers // TODO: Check if necessary
 	api.Games["1"] = &game
 
@@ -107,7 +107,7 @@ func TestTogglePlayerReadyWhenPlayerNotReady(t *testing.T) {
 		t.Fatal(err)
 	}
 	request.SetPathValue("tableId", "1")
-	request.SetPathValue("playerId", "1")
+	request.SetPathValue("playerId", newPlayer.Id)
 	responseWriter := httptest.NewRecorder()
 	api.TogglePlayerReady(responseWriter, request)
 	resp := responseWriter.Result()
@@ -133,7 +133,7 @@ func TestTogglePlayerReadyWhenPlayerReady(t *testing.T) {
 	// Arrange
 	api := rest.NewApi()
 	game := blackjack.New()
-	game.AddPlayer("1", "Player 1")
+	newPlayer, _ := game.AddPlayer("Player 1")
 	game.State = blackjack.WaitingForPlayers
 	api.Games["1"] = &game
 	api.Games["1"].Players[0].IsReady = true
@@ -144,7 +144,7 @@ func TestTogglePlayerReadyWhenPlayerReady(t *testing.T) {
 		t.Fatal(err)
 	}
 	request.SetPathValue("tableId", "1")
-	request.SetPathValue("playerId", "1")
+	request.SetPathValue("playerId", newPlayer.Id)
 	responseWriter := httptest.NewRecorder()
 	api.TogglePlayerReady(responseWriter, request)
 	resp := responseWriter.Result()
@@ -170,8 +170,11 @@ func TestPlayerHit(t *testing.T) {
 	// Arrange
 	api := rest.NewApi()
 	game := blackjack.New()
-	game.AddPlayer("1", "Player 1")
-	game.Deal()
+	newPlayer, _ := game.AddPlayer("Player 1")
+	err := game.Deal()
+	if err != nil {
+		t.Fatal(err)
+	}
 	game.State = blackjack.CardsDealt
 	api.Games["1"] = &game
 
@@ -181,7 +184,7 @@ func TestPlayerHit(t *testing.T) {
 		t.Fatal(err)
 	}
 	request.SetPathValue("tableId", "1")
-	request.SetPathValue("playerId", "1")
+	request.SetPathValue("playerId", newPlayer.Id)
 	responseWriter := httptest.NewRecorder()
 	api.PlayerAction(responseWriter, request)
 	resp := responseWriter.Result()

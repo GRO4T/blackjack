@@ -5,18 +5,18 @@ PROTO_OUT_DIR=./backend/proto
 PROTO_OUT=./backend/proto/blackjack.pb.go ./backend/proto/blackjack_grpc.pb.go
 EXECUTABLE=blackjack
 
-all: proto build
+all: install
 
-build:
+build: proto
 	cd $(SERVER_DIR) && go build -o ./bin/$(EXECUTABLE)
 
-install:
+install: proto
 	cd $(SERVER_DIR) && go install
 
-test:
+test: proto
 	cd $(SERVER_DIR) && go test ./...
 
-lint:
+lint: proto
 	cd $(SERVER_DIR) && golangci-lint run
 
 clean:

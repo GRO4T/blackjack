@@ -1,4 +1,4 @@
-image: dkolaska/blackjack-ci:0.0.1
+image: dkolaska/blackjack-ci:0.0.3
 
 stages:
   - test
@@ -6,6 +6,7 @@ stages:
 test:
   stage: test
   script:
+    - make proto
     - cd ./backend
     - go fmt ./...
     - golangci-lint run

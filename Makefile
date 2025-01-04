@@ -28,3 +28,6 @@ $(PROTO_OUT): $(PROTO_IN)
 	protoc -I=. --go_out=$(PROTO_OUT_DIR) --go_opt=paths=source_relative \
 		--go-grpc_out=$(PROTO_OUT_DIR) --go-grpc_opt=paths=source_relative \
 		$(PROTO_IN)
+
+ci_image:
+	docker build -t dkolaska/blackjack-ci:0.0.3 -f ci.dockerfile --platform linux/amd64 .

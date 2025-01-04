@@ -98,7 +98,6 @@ func TestTogglePlayerReadyWhenPlayerNotReady(t *testing.T) {
 	api := rest.NewApi()
 	game := blackjack.New()
 	newPlayer, _ := game.AddPlayer("Player 1")
-	game.State = blackjack.WaitingForPlayers // TODO: Check if necessary
 	api.Games["1"] = &game
 
 	// Act

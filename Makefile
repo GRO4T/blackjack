@@ -1,4 +1,3 @@
-# TODO: Rename blackjack to bjackapi
 SERVER_DIR=./backend
 PROTO_IN=./blackjack.proto
 PROTO_OUT_DIR=./backend/proto

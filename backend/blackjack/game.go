@@ -1,4 +1,3 @@
-// TODO(refactor): Change return types to (<type>, error) and handle errors
 package blackjack
 
 import (

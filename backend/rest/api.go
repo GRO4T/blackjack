@@ -1,5 +1,3 @@
-// TODO: Improve the file structure (types and functions are mixed up)
-
 package rest
 
 import (

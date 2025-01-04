@@ -9,9 +9,9 @@ import (
 	"net/http"
 	"time"
 
-	bgrpc "github.com/GRO4T/blackjack/grpc"
-	pb "github.com/GRO4T/blackjack/proto"
-	"github.com/GRO4T/blackjack/rest"
+	bgrpc "github.com/GRO4T/bjackapi/grpc"
+	pb "github.com/GRO4T/bjackapi/proto"
+	"github.com/GRO4T/bjackapi/rest"
 	"google.golang.org/grpc"
 )
 

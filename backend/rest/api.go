@@ -12,8 +12,8 @@ import (
 
 	"log/slog"
 
-	"github.com/GRO4T/blackjack/blackjack"
-	"github.com/GRO4T/blackjack/constant"
+	"github.com/GRO4T/bjackapi/blackjack"
+	"github.com/GRO4T/bjackapi/constant"
 )
 
 type RestApi struct {

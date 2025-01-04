@@ -1,4 +1,4 @@
-module github.com/GRO4T/blackjack
+module github.com/GRO4T/bjackapi
 
 go 1.23.3
 

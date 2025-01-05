@@ -7,8 +7,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/GRO4T/bjackapi/blackjack"
-	"github.com/GRO4T/bjackapi/rest"
+	"github.com/GRO4T/bjack-api/blackjack"
+	"github.com/GRO4T/bjack-api/rest"
 )
 
 func TestCreateGame(t *testing.T) {

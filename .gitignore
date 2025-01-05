@@ -1,2 +1,2 @@
-backend/bin/blackjack
+bjack-api/bin/bjack-api
 *.pb.go

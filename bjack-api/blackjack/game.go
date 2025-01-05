@@ -6,8 +6,8 @@ import (
 	"math/big"
 	"strconv"
 
-	"github.com/GRO4T/bjackapi/constant"
-	"github.com/GRO4T/bjackapi/deck"
+	"github.com/GRO4T/bjack-api/constant"
+	"github.com/GRO4T/bjack-api/deck"
 )
 
 var (

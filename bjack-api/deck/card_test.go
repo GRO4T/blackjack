@@ -3,7 +3,7 @@ package deck_test
 import (
 	"testing"
 
-	"github.com/GRO4T/bjackapi/deck"
+	"github.com/GRO4T/bjack-api/deck"
 )
 
 func AssertDeckSorted(t *testing.T, d []deck.Card) {

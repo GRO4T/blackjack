@@ -6,9 +6,9 @@ import (
 	"math/big"
 	"strconv"
 
-	"github.com/GRO4T/bjackapi/blackjack"
-	"github.com/GRO4T/bjackapi/constant"
-	pb "github.com/GRO4T/bjackapi/proto"
+	"github.com/GRO4T/bjack-api/blackjack"
+	"github.com/GRO4T/bjack-api/constant"
+	pb "github.com/GRO4T/bjack-api/proto"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"

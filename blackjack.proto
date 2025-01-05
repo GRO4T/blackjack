@@ -3,7 +3,7 @@ package bgrpc;
 
 import "google/protobuf/empty.proto";
 
-option go_package = "github.com/GRO4T/bjackapi/proto";
+option go_package = "github.com/GRO4T/bjack-api/proto";
 
 // Service definition
 

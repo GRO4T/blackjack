@@ -1,4 +1,4 @@
-module github.com/GRO4T/bjackapi
+module github.com/GRO4T/bjack-api
 
 go 1.23.3
 

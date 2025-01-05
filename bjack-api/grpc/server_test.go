@@ -6,9 +6,9 @@ import (
 	"net"
 	"testing"
 
-	"github.com/GRO4T/bjackapi/blackjack"
-	bgrpc "github.com/GRO4T/bjackapi/grpc"
-	pb "github.com/GRO4T/bjackapi/proto"
+	"github.com/GRO4T/bjack-api/blackjack"
+	bgrpc "github.com/GRO4T/bjack-api/grpc"
+	pb "github.com/GRO4T/bjack-api/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/test/bufconn"

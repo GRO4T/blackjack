@@ -1,8 +1,8 @@
-SERVER_DIR=./backend
+SERVER_DIR=./bjack-api
 PROTO_IN=./blackjack.proto
-PROTO_OUT_DIR=./backend/proto
-PROTO_OUT=./backend/proto/blackjack.pb.go ./backend/proto/blackjack_grpc.pb.go
-EXECUTABLE=blackjack
+PROTO_OUT_DIR=./bjack-api/proto
+PROTO_OUT=./bjack-api/proto/blackjack.pb.go ./bjack-api/proto/blackjack_grpc.pb.go
+EXECUTABLE=bjack-api
 
 all: install
 

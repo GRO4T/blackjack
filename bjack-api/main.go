@@ -12,6 +12,7 @@ import (
 	bgrpc "github.com/GRO4T/bjack-api/grpc"
 	pb "github.com/GRO4T/bjack-api/proto"
 	"github.com/GRO4T/bjack-api/rest"
+	"github.com/rs/cors"
 	"google.golang.org/grpc"
 )
 
@@ -35,15 +36,19 @@ func grpcServer() {
 // nolint: mnd
 func restApiServer() {
 	api := rest.NewApi()
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("/tables", api.CreateGame)
 	mux.HandleFunc("/tables/{tableId}", api.GetGameState)
 	mux.HandleFunc("/tables/ready/{tableId}/{playerId}", api.TogglePlayerReady)
 	mux.HandleFunc("/tables/players/{tableId}", api.AddPlayer)
 	mux.HandleFunc("/tables/{tableId}/{playerId}", api.PlayerAction)
+
+	corsMux := cors.Default().Handler(mux)
+
 	s := &http.Server{
 		Addr:           ServerAddr,
-		Handler:        mux,
+		Handler:        corsMux,
 		ReadTimeout:    10 * time.Second,
 		WriteTimeout:   10 * time.Second,
 		MaxHeaderBytes: 1 << 20,

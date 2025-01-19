@@ -89,7 +89,8 @@ func (a *RestApi) AddPlayer(w http.ResponseWriter, r *http.Request) {
 
 	newPlayer, err := game.AddPlayer("Bob") // TODO: Allow to set player name in request
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Failed to add player: %v", err), http.StatusInternalServerError)
+		http.Error(w, "Game is full", http.StatusBadRequest)
+		return
 	}
 
 	var resp AddPlayerResponse

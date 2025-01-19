@@ -36,11 +36,10 @@ export default function Lobby({ gameId }: Props) {
   useEffect(() => {
     fetch(BASE_URL + "/tables/" + gameId)
       .then((res) => res.json())
-      .then((json) => {
-        console.log(json);
-        setGameState(json);
+      .then((body) => {
+        setGameState(body);
       });
-  });
+  }, []);
 
   return (
     <>

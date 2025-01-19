@@ -5,55 +5,65 @@ interface Props {
   gameId: string;
   onGameIdChange: Dispatch<SetStateAction<string>>;
   onGameStartedChange: Dispatch<SetStateAction<boolean>>;
+  onPlayerIdChange: Dispatch<SetStateAction<string>>;
 }
 
 export default function MainMenu({
   gameId,
   onGameIdChange,
   onGameStartedChange,
+  onPlayerIdChange,
 }: Props) {
   const [info, setInfo] = useState("");
 
-  const StartGame = () => {
-    fetch(BASE_URL + "/tables", {
+  const CallCreateGame = async () => {
+    return await fetch(BASE_URL + "/tables", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: null,
-    })
-      .then((res) => res.json())
-      .then((json) => {
-        console.log(json);
-        onGameStartedChange(true);
-        onGameIdChange(json["tableId"]);
-      })
-      .catch((error) => {
-        console.log("Error starting new game: " + error.message);
-      });
+    });
   };
 
-  const JoinGame = (gameId: string) => {
-    fetch(BASE_URL + "/tables/players/" + gameId, {
+  const CallAddPlayer = async (tableId: string) => {
+    return await fetch(BASE_URL + "/tables/players/" + tableId, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: null,
-    })
-      .then((response) => {
-        if (!response.ok) {
-          if (response.status == 404) {
-            setInfo("Game not found");
-          }
-          throw new Error("POST /tables/players/{tableId} returned " + response.status)
+    });
+  };
+
+  const StartGame = async () => {
+    try {
+      const createGameResp = await CallCreateGame();
+      const createGameBody = await createGameResp.json();
+      const addPlayerResp = await CallAddPlayer(createGameBody["tableId"]);
+      const addPlayerBody = await addPlayerResp.json();
+      onGameStartedChange(true);
+      onGameIdChange(createGameBody["tableId"]);
+      onPlayerIdChange(addPlayerBody["playerId"]);
+    } catch (error: any) {
+      console.log("Error starting a new game: " + error.message);
+    }
+  };
+
+  const JoinGame = async (gameId: string) => {
+    try {
+      const addPlayerResp = await CallAddPlayer(gameId);
+      if (!addPlayerResp.ok) {
+        if (addPlayerResp.status == 404 || addPlayerResp.status == 400) {
+          const errMsg = await addPlayerResp.text();
+          setInfo(errMsg);
         }
-        console.log("Getting JSON");
-        response.json();
-      })
-      .then((json) => {
-        console.log(json);
-        onGameStartedChange(true);
-      })
-      .catch((error) => {
-        console.log("Error joining the game: " + error.message);
-      });
+        throw new Error(
+          "POST /tables/players/{tableId} returned " + addPlayerResp.status
+        );
+      }
+      const addPlayerBody = await addPlayerResp.json();
+      onGameStartedChange(true);
+      onPlayerIdChange(addPlayerBody["playerId"]);
+    } catch (error: any) {
+      console.log("Error joining the game: " + error.message);
+    }
   };
 
   return (

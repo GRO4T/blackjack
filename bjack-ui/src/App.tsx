@@ -6,15 +6,17 @@ import Lobby from "./components/Lobby";
 export default function App() {
   const [gameStarted, setGameStarted] = useState(false);
   const [gameId, setGameId] = useState("");
+  const [playerId, setPlayerId] = useState("");
 
   if (gameStarted) {
-    return <Lobby gameId={gameId} />
+    return <Lobby gameId={gameId} />;
   }
   return (
     <MainMenu
+      onGameStartedChange={setGameStarted}
       gameId={gameId}
       onGameIdChange={setGameId}
-      onGameStartedChange={setGameStarted}
+      onPlayerIdChange={setPlayerId}
     />
   );
 }

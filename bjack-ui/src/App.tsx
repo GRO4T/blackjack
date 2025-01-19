@@ -9,7 +9,7 @@ export default function App() {
   const [playerId, setPlayerId] = useState("");
 
   if (gameStarted) {
-    return <Lobby gameId={gameId} />;
+    return <Lobby gameId={gameId} playerId={playerId} />;
   }
   return (
     <MainMenu

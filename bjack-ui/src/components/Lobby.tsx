@@ -40,7 +40,7 @@ export default function Lobby({ gameId, playerId }: Props) {
       .then((body) => {
         setGameState(body);
       });
-  }, []);
+  }, [gameId]);
 
   const ReportReadiness = async () => {
     return await fetch(BASE_URL + "/tables/ready/" + gameId + "/" + playerId, {

@@ -1,60 +1,33 @@
-import { useState, Dispatch, SetStateAction, useEffect } from "react";
+import { Dispatch, SetStateAction, useEffect } from "react";
 import { BASE_URL } from "../constants";
+import { GameState, Player, Card } from "../App";
 
 interface Props {
   gameId: string;
   playerId: string;
+  gameState: GameState,
   gameStateSeq: number;
   onGameStateSeqChanged: Dispatch<SetStateAction<number>>;
-}
-
-interface Player {
-  name: string;
-  isReady: boolean;
-  chips: number;
-  bet: number;
-  outcome: number;
-}
-
-interface Card {
-  rank: number;
-  suit: number;
-}
-
-interface GameState {
-  players: Player[];
-  hands: Card[][];
-  state: number;
-  currentPlayer: number;
 }
 
 export default function Lobby({
   gameId,
   playerId,
+  gameState,
   gameStateSeq,
   onGameStateSeqChanged,
 }: Props) {
-  const [gameState, setGameState] = useState<GameState>({
-    players: [],
-    hands: [],
-    state: 0,
-    currentPlayer: 0,
-  });
   const webSocket = new WebSocket("ws://localhost:8080/state-updates/" + gameId);
+
+  useEffect(() => {
+    onGameStateSeqChanged(gameStateSeq + 1);
+  }, []);
 
   webSocket.onmessage = (event) => {
     if (event.data === "NewState") {
       onGameStateSeqChanged(gameStateSeq + 1);
     }
   };
-
-  useEffect(() => {
-    fetch(BASE_URL + "/tables/" + gameId)
-      .then((res) => res.json())
-      .then((body) => {
-        setGameState(body);
-      });
-  }, [gameId, gameStateSeq]);
 
   const ReportReadiness = async () => {
     return await fetch(BASE_URL + "/tables/ready/" + gameId + "/" + playerId, {

@@ -1,19 +1,61 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "./App.css";
-import MainMenu from "./components/MainMenu";
+import Game from "./components/Game";
 import Lobby from "./components/Lobby";
+import MainMenu from "./components/MainMenu";
+import { CARDS_DEALT_STATE, BASE_URL } from "./constants";
+
+export interface Player {
+  name: string;
+  isReady: boolean;
+  chips: number;
+  bet: number;
+  outcome: number;
+}
+
+export interface Card {
+  rank: number;
+  suit: number;
+}
+
+export interface GameState {
+  players: Player[];
+  hands: Card[][];
+  state: number;
+  currentPlayer: number;
+}
 
 export default function App() {
   const [gameStarted, setGameStarted] = useState(false);
   const [gameId, setGameId] = useState("");
   const [playerId, setPlayerId] = useState("");
   const [gameStateSeq, setGameStateSeq] = useState(0);
+  const [gameState, setGameState] = useState<GameState>({
+    players: [],
+    hands: [],
+    state: 0,
+    currentPlayer: 0,
+  });
+
+  useEffect(() => {
+    fetch(BASE_URL + "/tables/" + gameId)
+      .then((res) => res.json())
+      .then((body) => {
+        setGameState(body);
+      });
+  }, [gameId, gameStateSeq]);
 
   if (gameStarted) {
+    if (gameState.state === CARDS_DEALT_STATE) {
+      return (
+        <Game gameState={gameState}/>
+      )
+    }
     return (
       <Lobby
         gameId={gameId}
         playerId={playerId}
+        gameState={gameState}
         gameStateSeq={gameStateSeq}
         onGameStateSeqChanged={setGameStateSeq}
       />

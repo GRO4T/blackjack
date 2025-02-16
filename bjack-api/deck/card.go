@@ -41,8 +41,8 @@ const (
 )
 
 type Card struct {
-	Rank Rank
-	Suit Suit
+	Rank Rank `json:"rank"`
+	Suit Suit `json:"suit"`
 }
 
 func New(options ...func([]Card) []Card) []Card {

@@ -7,9 +7,17 @@ export default function App() {
   const [gameStarted, setGameStarted] = useState(false);
   const [gameId, setGameId] = useState("");
   const [playerId, setPlayerId] = useState("");
+  const [gameStateSeq, setGameStateSeq] = useState(0);
 
   if (gameStarted) {
-    return <Lobby gameId={gameId} playerId={playerId} />;
+    return (
+      <Lobby
+        gameId={gameId}
+        playerId={playerId}
+        gameStateSeq={gameStateSeq}
+        onGameStateSeqChanged={setGameStateSeq}
+      />
+    );
   }
   return (
     <MainMenu

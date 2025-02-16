@@ -12,10 +12,12 @@ import (
 
 	"github.com/GRO4T/bjack-api/blackjack"
 	"github.com/GRO4T/bjack-api/constant"
+	"github.com/gorilla/websocket"
 )
 
 type RestApi struct {
-	Games map[string]*blackjack.Blackjack
+	Games      map[string]*blackjack.Blackjack
+	Websockets map[string][]*websocket.Conn // TODO: Test if the websockets will close automatically when the server is killed.
 }
 
 type CreateGameResponse struct {
@@ -28,7 +30,8 @@ type AddPlayerResponse struct {
 
 func NewApi() RestApi {
 	return RestApi{
-		Games: map[string]*blackjack.Blackjack{},
+		Games:      map[string]*blackjack.Blackjack{},
+		Websockets: map[string][]*websocket.Conn{},
 	}
 }
 
@@ -38,7 +41,11 @@ func (a *RestApi) CreateGame(w http.ResponseWriter, r *http.Request) {
 	}
 
 	tableId := getRandomId()
-	newGame := blackjack.New()
+	newGame := blackjack.New(func() {
+		for _, ws := range a.Websockets[tableId] {
+			ws.WriteMessage(websocket.TextMessage, []byte("NewState"))
+		}
+	})
 	a.Games[tableId] = &newGame
 
 	var resp CreateGameResponse
@@ -166,6 +173,24 @@ func (a *RestApi) PlayerAction(w http.ResponseWriter, r *http.Request) {
 	default:
 		http.Error(w, "Invalid action", http.StatusBadRequest)
 		return
+	}
+}
+
+var upgrader = websocket.Upgrader{
+	CheckOrigin: func(r *http.Request) bool {
+		return true // Accepting all requests
+	},
+}
+
+func (a *RestApi) AddStateObserver(w http.ResponseWriter, r *http.Request) {
+	tableId := r.PathValue("tableId")
+
+	ws, _ := upgrader.Upgrade(w, r, nil)
+	gameSubscribers, ok := a.Websockets[tableId]
+	if ok {
+		a.Websockets[tableId] = append(gameSubscribers, ws)
+	} else {
+		a.Websockets[tableId] = []*websocket.Conn{ws}
 	}
 }
 

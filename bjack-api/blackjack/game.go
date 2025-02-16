@@ -57,11 +57,12 @@ type Player struct {
 }
 
 type Blackjack struct {
-	Deck          []deck.Card   `json:"-"`
-	Hands         [][]deck.Card `json:"hands"`
-	Players       []*Player     `json:"players"`
-	State         State         `json:"state"`
-	CurrentPlayer int           `json:"currentPlayer"`
+	Deck           []deck.Card   `json:"-"`
+	Hands          [][]deck.Card `json:"hands"`
+	Players        []*Player     `json:"players"`
+	State          State         `json:"state"`
+	CurrentPlayer  int           `json:"currentPlayer"`
+	onStateChanged func()        `json:"-"`
 }
 
 func NewPlayer(id string, name string) Player {
@@ -75,14 +76,15 @@ func NewPlayer(id string, name string) Player {
 	}
 }
 
-func New() Blackjack {
+func New(onStateChanged func()) Blackjack {
 	dealerHand := []deck.Card{}
 	return Blackjack{
-		Deck:          deck.New(deck.WithShuffle()),
-		Hands:         [][]deck.Card{dealerHand},
-		Players:       []*Player{},
-		State:         WaitingForPlayers,
-		CurrentPlayer: 1,
+		Deck:           deck.New(deck.WithShuffle()),
+		Hands:          [][]deck.Card{dealerHand},
+		Players:        []*Player{},
+		State:          WaitingForPlayers,
+		CurrentPlayer:  1,
+		onStateChanged: onStateChanged,
 	}
 }
 
@@ -96,6 +98,9 @@ func (b *Blackjack) AddPlayer(name string) (*Player, error) {
 	newPlayer := NewPlayer(getRandomId(), name)
 	b.Players = append(b.Players, &newPlayer)
 	b.Hands = append(b.Hands, []deck.Card{})
+	if b.onStateChanged != nil {
+		b.onStateChanged()
+	}
 	return &newPlayer, nil
 }
 
@@ -126,6 +131,10 @@ func (b *Blackjack) TogglePlayerReady(playerId string) (*Player, error) {
 			return nil, err
 		}
 		b.State = CardsDealt
+	}
+
+	if b.onStateChanged != nil {
+		b.onStateChanged()
 	}
 
 	return targetPlayer, nil

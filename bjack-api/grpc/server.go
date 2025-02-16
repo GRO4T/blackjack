@@ -27,7 +27,7 @@ func NewServer() *BlackjackServer {
 
 func (s *BlackjackServer) CreateGame(context.Context, *emptypb.Empty) (*pb.CreateGameResponse, error) {
 	tableId := getRandomId()
-	newGame := blackjack.New()
+	newGame := blackjack.New(nil)
 	s.Games[tableId] = &newGame
 	return &pb.CreateGameResponse{TableId: tableId}, nil
 }

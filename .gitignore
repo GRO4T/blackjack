@@ -1,2 +1,3 @@
 bjack-api/bin/bjack-api
 *.pb.go
+.DS_Store

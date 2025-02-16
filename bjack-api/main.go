@@ -43,6 +43,7 @@ func restApiServer() {
 	mux.HandleFunc("/tables/ready/{tableId}/{playerId}", api.TogglePlayerReady)
 	mux.HandleFunc("/tables/players/{tableId}", api.AddPlayer)
 	mux.HandleFunc("/tables/{tableId}/{playerId}", api.PlayerAction)
+	mux.HandleFunc("/state-updates/{tableId}", api.AddStateObserver)
 
 	corsMux := cors.Default().Handler(mux)
 

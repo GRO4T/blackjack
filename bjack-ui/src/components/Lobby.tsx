@@ -1,9 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, Dispatch, SetStateAction, useEffect } from "react";
 import { BASE_URL } from "../constants";
 
 interface Props {
   gameId: string;
   playerId: string;
+  gameStateSeq: number;
+  onGameStateSeqChanged: Dispatch<SetStateAction<number>>;
 }
 
 interface Player {
@@ -26,13 +28,25 @@ interface GameState {
   currentPlayer: number;
 }
 
-export default function Lobby({ gameId, playerId }: Props) {
+export default function Lobby({
+  gameId,
+  playerId,
+  gameStateSeq,
+  onGameStateSeqChanged,
+}: Props) {
   const [gameState, setGameState] = useState<GameState>({
     players: [],
     hands: [],
     state: 0,
     currentPlayer: 0,
   });
+  const webSocket = new WebSocket("ws://localhost:8080/state-updates/" + gameId);
+
+  webSocket.onmessage = (event) => {
+    if (event.data === "NewState") {
+      onGameStateSeqChanged(gameStateSeq + 1);
+    }
+  };
 
   useEffect(() => {
     fetch(BASE_URL + "/tables/" + gameId)
@@ -40,7 +54,7 @@ export default function Lobby({ gameId, playerId }: Props) {
       .then((body) => {
         setGameState(body);
       });
-  }, [gameId]);
+  }, [gameId, gameStateSeq]);
 
   const ReportReadiness = async () => {
     return await fetch(BASE_URL + "/tables/ready/" + gameId + "/" + playerId, {

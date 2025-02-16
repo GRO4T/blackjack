@@ -95,6 +95,11 @@ func (b *Blackjack) AddPlayer(name string) (*Player, error) {
 	if len(b.Players) >= constant.MaxPlayers {
 		return nil, ErrGameIsFull
 	}
+	for _, player := range b.Players {
+		if player.Name == name {
+			return nil, errors.New("Player with name " + name + " already exists")
+		}
+	}
 	newPlayer := NewPlayer(getRandomId(), name)
 	b.Players = append(b.Players, &newPlayer)
 	b.Hands = append(b.Hands, []deck.Card{})

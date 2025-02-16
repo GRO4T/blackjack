@@ -4,6 +4,8 @@ import { BASE_URL } from "../constants";
 interface Props {
   gameId: string;
   onGameIdChange: Dispatch<SetStateAction<string>>;
+  playerName: string;
+  onPlayerNameChange: Dispatch<SetStateAction<string>>;
   onGameStartedChange: Dispatch<SetStateAction<boolean>>;
   onPlayerIdChange: Dispatch<SetStateAction<string>>;
 }
@@ -11,32 +13,44 @@ interface Props {
 export default function MainMenu({
   gameId,
   onGameIdChange,
+  playerName,
+  onPlayerNameChange,
   onGameStartedChange,
   onPlayerIdChange,
 }: Props) {
   const [info, setInfo] = useState("");
 
-  const CallCreateGame = async () => {
+  const CallCreateGame = async (playerName: string) => {
     return await fetch(BASE_URL + "/tables", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: null,
+      body: JSON.stringify({ playerName: playerName }),
     });
   };
 
-  const CallAddPlayer = async (tableId: string) => {
+  const CallAddPlayer = async (tableId: string, playerName: string) => {
     return await fetch(BASE_URL + "/tables/players/" + tableId, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: null,
+      body: JSON.stringify({ playerName: playerName }),
     });
   };
 
   const StartGame = async () => {
     try {
-      const createGameResp = await CallCreateGame();
+      const createGameResp = await CallCreateGame(playerName);
+      if (!createGameResp.ok) {
+        if (createGameResp.status == 400) {
+          const errMsg = await createGameResp.text();
+          setInfo(errMsg);
+        }
+        throw new Error("POST /tables returned " + createGameResp.status);
+      }
       const createGameBody = await createGameResp.json();
-      const addPlayerResp = await CallAddPlayer(createGameBody["tableId"]);
+      const addPlayerResp = await CallAddPlayer(
+        createGameBody["tableId"],
+        playerName
+      );
       const addPlayerBody = await addPlayerResp.json();
       onGameStartedChange(true);
       onGameIdChange(createGameBody["tableId"]);
@@ -48,7 +62,7 @@ export default function MainMenu({
 
   const JoinGame = async (gameId: string) => {
     try {
-      const addPlayerResp = await CallAddPlayer(gameId);
+      const addPlayerResp = await CallAddPlayer(gameId, playerName);
       if (!addPlayerResp.ok) {
         if (addPlayerResp.status == 404 || addPlayerResp.status == 400) {
           const errMsg = await addPlayerResp.text();
@@ -71,6 +85,11 @@ export default function MainMenu({
       <div className="column">
         <button onClick={StartGame}>Host a new game</button>
         <button onClick={() => JoinGame(gameId)}>Join a game</button>
+        <input
+          value={playerName}
+          placeholder="playerName"
+          onChange={(e) => onPlayerNameChange(e.target.value)}
+        />
         <input
           value={gameId}
           placeholder="tableId"

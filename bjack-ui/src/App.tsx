@@ -28,6 +28,7 @@ export interface GameState {
 export default function App() {
   const [gameStarted, setGameStarted] = useState(false);
   const [gameId, setGameId] = useState("");
+  const [playerName, setPlayerName] = useState("");
   const [playerId, setPlayerId] = useState("");
   const [gameStateSeq, setGameStateSeq] = useState(0);
   const [gameState, setGameState] = useState<GameState>({
@@ -48,7 +49,7 @@ export default function App() {
   if (gameStarted) {
     if (gameState.state === CARDS_DEALT_STATE) {
       return (
-        <Game gameState={gameState}/>
+        <Game gameState={gameState} playerName={playerName}/>
       )
     }
     return (
@@ -65,6 +66,8 @@ export default function App() {
     <MainMenu
       onGameStartedChange={setGameStarted}
       gameId={gameId}
+      playerName={playerName}
+      onPlayerNameChange={setPlayerName}
       onGameIdChange={setGameId}
       onPlayerIdChange={setPlayerId}
     />

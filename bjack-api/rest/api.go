@@ -20,8 +20,16 @@ type RestApi struct {
 	Websockets map[string][]*websocket.Conn // TODO: Test if the websockets will close automatically when the server is killed.
 }
 
+type CreateGameRequest struct {
+	PlayerName string `json:"playerName"`
+}
+
 type CreateGameResponse struct {
 	TableId string `json:"tableId"`
+}
+
+type AddPlayerRequest struct {
+	PlayerName string `json:"playerName"`
 }
 
 type AddPlayerResponse struct {
@@ -38,6 +46,19 @@ func NewApi() RestApi {
 func (a *RestApi) CreateGame(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+
+	var reqData CreateGameRequest
+	err := json.NewDecoder(r.Body).Decode(&reqData)
+	if err != nil {
+		slog.Error(fmt.Sprintf("Failed to decode request: %v", err))
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	if reqData.PlayerName == "" {
+		http.Error(w, "Player name cannot be empty", http.StatusBadRequest)
+		return
 	}
 
 	tableId := getRandomId()
@@ -94,9 +115,22 @@ func (a *RestApi) AddPlayer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	newPlayer, err := game.AddPlayer("Bob") // TODO: Allow to set player name in request
+	var reqData AddPlayerRequest
+	err := json.NewDecoder(r.Body).Decode(&reqData)
 	if err != nil {
-		http.Error(w, "Game is full", http.StatusBadRequest)
+		slog.Error(fmt.Sprintf("Failed to decode request: %v", err))
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	if reqData.PlayerName == "" {
+		http.Error(w, "Player name cannot be empty", http.StatusBadRequest)
+		return
+	}
+
+	newPlayer, err := game.AddPlayer(reqData.PlayerName)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 

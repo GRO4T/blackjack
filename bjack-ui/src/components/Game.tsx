@@ -1,16 +1,11 @@
-import { Dispatch, SetStateAction } from "react";
 import { GameState, Player, Card } from "../App";
 
 interface Props {
-  gameId: string;
-  playerId: string;
   gameState: GameState,
-  onGameStateChanged: Dispatch<SetStateAction<GameState>>;
-  gameStateSeq: number;
-  onGameStateSeqChanged: Dispatch<SetStateAction<number>>;
+  playerName: string
 }
 
-export default function Game({ gameState }: Props) {
+export default function Game({ gameState, playerName }: Props) {
   return (
     <>
       <div>
@@ -28,6 +23,10 @@ export default function Game({ gameState }: Props) {
             ))}
           </div>
         ))
+      }
+
+      {gameState.players[gameState.currentPlayer - 1].name === playerName && 
+        <div>My Turn</div>
       }
 
       State: {gameState.state} <br />

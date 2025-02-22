@@ -64,7 +64,11 @@ func (a *RestApi) CreateGame(w http.ResponseWriter, r *http.Request) {
 	tableId := getRandomId()
 	newGame := blackjack.New(func() {
 		for _, ws := range a.Websockets[tableId] {
-			ws.WriteMessage(websocket.TextMessage, []byte("NewState"))
+			if err := ws.WriteMessage(websocket.TextMessage, []byte("NewState")); err != nil {
+				slog.Error(fmt.Sprintf("Failed to send data via websocket: %v", err))
+				http.Error(w, "Internal server error", http.StatusInternalServerError)
+				return
+			}
 		}
 	})
 	a.Games[tableId] = &newGame

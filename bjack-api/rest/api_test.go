@@ -2,6 +2,7 @@
 package rest_test
 
 import (
+	"bytes"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -15,9 +16,14 @@ func TestCreateGame(t *testing.T) {
 	// Arrange
 	api := rest.NewApi()
 	server := httptest.NewServer(http.HandlerFunc(api.CreateGame))
+	body := rest.CreateGameRequest{PlayerName: "Player 1"}
+	bodyBytes, err := json.Marshal(body)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	// Act
-	resp, err := http.Post(server.URL, "application/json", nil)
+	resp, err := http.Post(server.URL, "application/json", bytes.NewReader(bodyBytes))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -43,7 +49,7 @@ func TestCreateGame(t *testing.T) {
 func TestGetGameState(t *testing.T) {
 	// Arrange
 	api := rest.NewApi()
-	game := blackjack.New()
+	game := blackjack.New(nil)
 	api.Games["1"] = &game
 
 	// Act
@@ -70,11 +76,16 @@ func TestGetGameState(t *testing.T) {
 func TestAddPlayer(t *testing.T) {
 	// Arrange
 	api := rest.NewApi()
-	game := blackjack.New()
+	game := blackjack.New(nil)
 	api.Games["1"] = &game
+	body := rest.AddPlayerRequest{PlayerName: "Player 1"}
+	bodyBytes, err := json.Marshal(body)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	// Act
-	request, err := http.NewRequest(http.MethodPost, "/tables/players/{tableId}", nil)
+	request, err := http.NewRequest(http.MethodPost, "/tables/players/{tableId}", bytes.NewReader(bodyBytes))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -96,7 +107,7 @@ func TestAddPlayer(t *testing.T) {
 func TestTogglePlayerReadyWhenPlayerNotReady(t *testing.T) {
 	// Arrange
 	api := rest.NewApi()
-	game := blackjack.New()
+	game := blackjack.New(nil)
 	newPlayer, _ := game.AddPlayer("Player 1")
 	api.Games["1"] = &game
 
@@ -131,7 +142,7 @@ func TestTogglePlayerReadyWhenPlayerNotReady(t *testing.T) {
 func TestTogglePlayerReadyWhenPlayerReady(t *testing.T) {
 	// Arrange
 	api := rest.NewApi()
-	game := blackjack.New()
+	game := blackjack.New(nil)
 	newPlayer, _ := game.AddPlayer("Player 1")
 	game.State = blackjack.WaitingForPlayers
 	api.Games["1"] = &game
@@ -168,7 +179,7 @@ func TestTogglePlayerReadyWhenPlayerReady(t *testing.T) {
 func TestPlayerHit(t *testing.T) {
 	// Arrange
 	api := rest.NewApi()
-	game := blackjack.New()
+	game := blackjack.New(nil)
 	newPlayer, _ := game.AddPlayer("Player 1")
 	err := game.Deal()
 	if err != nil {
@@ -206,7 +217,12 @@ func TestSimpleGame(t *testing.T) {
 	api := rest.NewApi()
 
 	// Create game
-	createGameRequest, err := http.NewRequest(http.MethodPost, "/tables", nil)
+	createGameBody := rest.CreateGameRequest{PlayerName: "Player 1"}
+	createGameBodyBytes, err := json.Marshal(createGameBody)
+	if err != nil {
+		t.Fatal(err)
+	}
+	createGameRequest, err := http.NewRequest(http.MethodPost, "/tables", bytes.NewReader(createGameBodyBytes))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -224,7 +240,12 @@ func TestSimpleGame(t *testing.T) {
 	tableId := createGameRespBody.TableId
 
 	// Add player
-	addPlayerRequest, err := http.NewRequest(http.MethodPost, "/tables/players/{tableId}", nil)
+	addPlayerBody := rest.AddPlayerRequest{PlayerName: "Player 1"}
+	addPlayerBodyBytes, err := json.Marshal(addPlayerBody)
+	if err != nil {
+		t.Fatal(err)
+	}
+	addPlayerRequest, err := http.NewRequest(http.MethodPost, "/tables/players/{tableId}", bytes.NewReader(addPlayerBodyBytes))
 	addPlayerRequest.SetPathValue("tableId", tableId)
 	if err != nil {
 		t.Fatal(err)

@@ -14,13 +14,15 @@ jobs:
         run: make proto
 
       - name: Format
-        working-directory: bjack-api
-        run: go fmt ./...
+        run: test -z $(gofmt -l .) || gofmt -l . | false
       
       - name: Lint
-        working-directory: bjack-api
-        run: golangci-lint run
+        uses: golangci/golangci-lint-action@v6.5.0
+        with:
+          version: v1.62.2
+          working-directory: ./bjack-api
+        env:
+          GOFLAGS: -buildvcs=false
       
       - name: Test
-        working-directory: bjack-api
-        run: go test ./...
+        run: make test

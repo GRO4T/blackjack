@@ -23,6 +23,9 @@ test: proto
 lint: proto
 	cd $(SERVER_DIR) && golangci-lint run
 
+fmt: proto
+	cd $(SERVER_DIR) && gofmt -s -w .
+
 clean:
 	rm -f $(PROTO_OUT) $(SERVER_DIR)/bin/$(EXECUTABLE)
 

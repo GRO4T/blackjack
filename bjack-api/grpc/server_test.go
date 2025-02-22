@@ -75,7 +75,7 @@ func TestGrpcApi_CreateGame(t *testing.T) {
 func TestGrpcApi_GetGameState(t *testing.T) {
 	// Arrange
 	server, client := Setup(t)
-	game := blackjack.New()
+	game := blackjack.New(nil)
 	_, err := game.AddPlayer("Player 1")
 	if err != nil {
 		t.Fatal(err)
@@ -97,7 +97,7 @@ func TestGrpcApi_GetGameState(t *testing.T) {
 func TestGrpcApi_AddPlayer(t *testing.T) {
 	// Arrange
 	server, client := Setup(t)
-	game := blackjack.New()
+	game := blackjack.New(nil)
 	server.Games["1"] = &game
 
 	// Act
@@ -115,7 +115,7 @@ func TestGrpcApi_AddPlayer(t *testing.T) {
 func TestGrpcApi_TogglePlayerReadyWhenPlayerNotReady(t *testing.T) {
 	// Arrange
 	server, client := Setup(t)
-	game := blackjack.New()
+	game := blackjack.New(nil)
 	newPlayer, _ := game.AddPlayer("Player 1")
 	server.Games["1"] = &game
 
@@ -140,7 +140,7 @@ func TestGrpcApi_TogglePlayerReadyWhenPlayerNotReady(t *testing.T) {
 func TestGrpcApi_TogglePlayerReadyWhenPlayerReady(t *testing.T) {
 	// Arrange
 	server, client := Setup(t)
-	game := blackjack.New()
+	game := blackjack.New(nil)
 	newPlayer, _ := game.AddPlayer("Player 1")
 	server.Games["1"] = &game
 	server.Games["1"].Players[0].IsReady = true
@@ -163,7 +163,7 @@ func TestGrpcApi_TogglePlayerReadyWhenPlayerReady(t *testing.T) {
 func TestGrpcApi_PlayerAction(t *testing.T) {
 	// Arrange
 	server, client := Setup(t)
-	game := blackjack.New()
+	game := blackjack.New(nil)
 	newPlayer, _ := game.AddPlayer("Player 1")
 	err := game.Deal()
 	if err != nil {

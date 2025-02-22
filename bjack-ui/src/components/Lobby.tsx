@@ -1,11 +1,12 @@
 import { Dispatch, SetStateAction, useEffect } from "react";
-import { BASE_URL } from "../constants";
+import { BASE_URL, CARDS_DEALT_STATE, FINISHED_STATE } from "../constants";
 import { GameState, Player, Card } from "../App";
 
 interface Props {
   gameId: string;
   playerId: string;
-  gameState: GameState,
+  playerName: string;
+  gameState: GameState;
   gameStateSeq: number;
   onGameStateSeqChanged: Dispatch<SetStateAction<number>>;
 }
@@ -13,11 +14,14 @@ interface Props {
 export default function Lobby({
   gameId,
   playerId,
+  playerName,
   gameState,
   gameStateSeq,
   onGameStateSeqChanged,
 }: Props) {
-  const webSocket = new WebSocket("ws://localhost:8080/state-updates/" + gameId);
+  const webSocket = new WebSocket(
+    "ws://localhost:8080/state-updates/" + gameId
+  );
 
   useEffect(() => {
     onGameStateSeqChanged(gameStateSeq + 1);
@@ -35,6 +39,22 @@ export default function Lobby({
       headers: { "Content-Type": "application/json" },
       body: null,
     });
+  };
+
+  const GetOutcome = (name: string) => {
+    const player = gameState.players.find(
+      (player: Player) => player.name === name
+    );
+    switch (player?.outcome) {
+      case 1:
+        return "Win";
+      case 2:
+        return "Lose";
+      case 3:
+        return "Push";
+      default:
+        return "Unknown";
+    }
   };
 
   return (
@@ -58,7 +78,7 @@ export default function Lobby({
               <li key={index}>
                 {hand.map((card: Card) => (
                   <span key={card.rank + card.suit}>
-                    {card.rank} {card.suit}
+                    {card.rank} {card.suit}+
                   </span>
                 ))}
               </li>
@@ -66,7 +86,11 @@ export default function Lobby({
         </ul>
         State: {gameState.state} <br />
         CurrentPlayer: {gameState.currentPlayer}
-        <button onClick={ReportReadiness}>Ready</button>
+        {gameState.state === FINISHED_STATE ? (
+          <div>{GetOutcome(playerName)}</div>
+        ) : (
+          <button onClick={ReportReadiness}>Ready</button>
+        )}
       </div>
     </>
   );

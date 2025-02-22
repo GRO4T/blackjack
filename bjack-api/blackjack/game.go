@@ -206,6 +206,10 @@ func (b *Blackjack) PlayerAction(playerId string, action Action) error {
 		b.DetermineOutcomes()
 	}
 
+	if b.onStateChanged != nil {
+		b.onStateChanged()
+	}
+
 	return nil
 }
 

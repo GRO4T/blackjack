@@ -1,0 +1,26 @@
+name: Blackjack integration workflow
+
+on: push
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    container:
+      image: dkolaska/blackjack-ci:0.0.3
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate protobuf files
+        run: make proto
+
+      - name: Format
+        working-directory: bjack-api
+        run: go fmt ./...
+      
+      - name: Lint
+        working-directory: bjack-api
+        run: golangci-lint run
+      
+      - name: Test
+        working-directory: bjack-api
+        run: go test ./...

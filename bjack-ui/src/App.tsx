@@ -49,13 +49,19 @@ export default function App() {
   if (gameStarted) {
     if (gameState.state === CARDS_DEALT_STATE) {
       return (
-        <Game gameState={gameState} playerName={playerName}/>
-      )
+        <Game
+          gameId={gameId}
+          playerId={playerId}
+          gameState={gameState}
+          playerName={playerName}
+        />
+      );
     }
     return (
       <Lobby
         gameId={gameId}
         playerId={playerId}
+        playerName={playerName}
         gameState={gameState}
         gameStateSeq={gameStateSeq}
         onGameStateSeqChanged={setGameStateSeq}

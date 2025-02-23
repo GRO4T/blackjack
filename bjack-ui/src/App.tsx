@@ -4,6 +4,7 @@ import Game from "./components/Game";
 import Lobby from "./components/Lobby";
 import MainMenu from "./components/MainMenu";
 import { CARDS_DEALT_STATE, BASE_URL } from "./constants";
+import { useSessionStorage } from "./useSessionStorage";
 
 export interface Player {
   name: string;
@@ -26,12 +27,12 @@ export interface GameState {
 }
 
 export default function App() {
-  const [gameStarted, setGameStarted] = useState(false);
-  const [gameId, setGameId] = useState("");
-  const [playerName, setPlayerName] = useState("");
-  const [playerId, setPlayerId] = useState("");
-  const [gameStateSeq, setGameStateSeq] = useState(0);
-  const [gameState, setGameState] = useState<GameState>({
+  const [gameStarted, setGameStarted] = useSessionStorage("gameStarted", false);
+  const [gameId, setGameId] = useSessionStorage("gameId", "");
+  const [playerName, setPlayerName] = useSessionStorage("playerName", "");
+  const [playerId, setPlayerId] = useSessionStorage("playerId", "");
+  const [gameStateSeq, setGameStateSeq] = useSessionStorage("gameStateSeq", 0);
+  const [gameState, setGameState] = useSessionStorage("gameState", {
     players: [],
     hands: [],
     state: 0,
@@ -59,6 +60,7 @@ export default function App() {
     }
     return (
       <Lobby
+        onGameStartedChanged={setGameStarted}
         gameId={gameId}
         playerId={playerId}
         playerName={playerName}

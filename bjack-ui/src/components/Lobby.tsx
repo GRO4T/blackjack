@@ -3,6 +3,7 @@ import { BASE_URL, CARDS_DEALT_STATE, FINISHED_STATE } from "../constants";
 import { GameState, Player, Card } from "../App";
 
 interface Props {
+  onGameStartedChanged: Dispatch<SetStateAction<boolean>>;
   gameId: string;
   playerId: string;
   playerName: string;
@@ -12,6 +13,7 @@ interface Props {
 }
 
 export default function Lobby({
+  onGameStartedChanged,
   gameId,
   playerId,
   playerName,
@@ -57,6 +59,13 @@ export default function Lobby({
     }
   };
 
+  const Leave = async () => {
+    await fetch(BASE_URL + "/tables/players/" + gameId + "/" + playerId, {
+      method: "DELETE",
+    });
+    onGameStartedChanged(false);
+  };
+
   return (
     <>
       <div className="column">
@@ -91,6 +100,7 @@ export default function Lobby({
         ) : (
           <button onClick={ReportReadiness}>Ready</button>
         )}
+        <button onClick={Leave}>Leave</button>
       </div>
     </>
   );

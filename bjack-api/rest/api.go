@@ -149,6 +149,28 @@ func (a *RestApi) AddPlayer(w http.ResponseWriter, r *http.Request) {
 	slog.Debug("Added player to game", "playerId", newPlayer.Id, "tableId", tableId)
 }
 
+func (a *RestApi) RemovePlayer(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodDelete {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+
+	tableId := r.PathValue("tableId")
+	playerId := r.PathValue("playerId")
+
+	game, ok := a.Games[tableId]
+	if !ok {
+		http.Error(w, "Game not found", http.StatusNotFound)
+		return
+	}
+
+	if err := game.RemovePlayer(playerId); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	slog.Debug("Removed player from game", "playerId", playerId, "tableId", tableId)
+}
+
 func (a *RestApi) TogglePlayerReady(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)

@@ -73,24 +73,41 @@ func TestGetGameState(t *testing.T) {
 	}
 }
 
+func buildAddPlayerRequest(t *testing.T, tableId string, playerName string) *http.Request {
+	t.Helper()
+	body := rest.AddPlayerRequest{PlayerName: playerName}
+	bodyBytes, err := json.Marshal(body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	request, err := http.NewRequest(http.MethodPost, "/tables/players/{tableId}", bytes.NewReader(bodyBytes))
+	if err != nil {
+		t.Fatal(err)
+	}
+	request.SetPathValue("tableId", tableId)
+	return request
+}
+
+func buildRemovePlayerRequest(t *testing.T, tableId string, playerId string) *http.Request {
+	t.Helper()
+	request, err := http.NewRequest(http.MethodDelete, "/tables/players/{tableId}/{playerId}", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	request.SetPathValue("tableId", tableId)
+	request.SetPathValue("playerId", playerId)
+	return request
+}
+
 func TestAddPlayer(t *testing.T) {
 	// Arrange
 	api := rest.NewApi()
 	game := blackjack.New(nil)
 	api.Games["1"] = &game
-	body := rest.AddPlayerRequest{PlayerName: "Player 1"}
-	bodyBytes, err := json.Marshal(body)
-	if err != nil {
-		t.Fatal(err)
-	}
+	responseWriter := httptest.NewRecorder()
+	request := buildAddPlayerRequest(t, "1", "Player 1")
 
 	// Act
-	request, err := http.NewRequest(http.MethodPost, "/tables/players/{tableId}", bytes.NewReader(bodyBytes))
-	if err != nil {
-		t.Fatal(err)
-	}
-	request.SetPathValue("tableId", "1")
-	responseWriter := httptest.NewRecorder()
 	api.AddPlayer(responseWriter, request)
 	resp := responseWriter.Result()
 	defer resp.Body.Close()
@@ -101,6 +118,60 @@ func TestAddPlayer(t *testing.T) {
 	}
 	if len(api.Games["1"].Players) != 1 {
 		t.Errorf("Expected 1 player; got %v", len(api.Games["1"].Players))
+	}
+}
+
+func TestRemovePlayer(t *testing.T) {
+	// Arrange
+	api := rest.NewApi()
+	game := blackjack.New(nil)
+	api.Games["1"] = &game
+
+	newPlayer, _ := game.AddPlayer("Player 1")
+
+	removePlayerResponseWriter := httptest.NewRecorder()
+	removePlayerRequest := buildRemovePlayerRequest(t, "1", newPlayer.Id)
+
+	// Act
+	api.RemovePlayer(removePlayerResponseWriter, removePlayerRequest)
+	resp := removePlayerResponseWriter.Result()
+	defer resp.Body.Close()
+
+	// Assert
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("Expected status OK; got %v\n", resp.Status)
+	}
+	if len(api.Games["1"].Players) != 0 {
+		t.Errorf("Expected 0 players; got %v", len(api.Games["1"].Players))
+	}
+}
+
+func TestRemovePlayerWhenGameAlreadyStarted(t *testing.T) {
+	// Arrange
+	api := rest.NewApi()
+	game := blackjack.New(nil)
+	api.Games["1"] = &game
+
+	newPlayer, _ := game.AddPlayer("Player 1")
+	_, err := game.TogglePlayerReady(newPlayer.Id)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	removePlayerResponseWriter := httptest.NewRecorder()
+	removePlayerRequest := buildRemovePlayerRequest(t, "1", newPlayer.Id)
+
+	// Act
+	api.RemovePlayer(removePlayerResponseWriter, removePlayerRequest)
+	resp := removePlayerResponseWriter.Result()
+	defer resp.Body.Close()
+
+	// Assert
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Fatalf("Expected status 400; got %v\n", resp.Status)
+	}
+	if len(game.Players) != 1 {
+		t.Errorf("Expected 1 players; got %v", len(game.Players))
 	}
 }
 

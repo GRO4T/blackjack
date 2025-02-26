@@ -109,6 +109,24 @@ func (b *Blackjack) AddPlayer(name string) (*Player, error) {
 	return &newPlayer, nil
 }
 
+func (b *Blackjack) RemovePlayer(id string) error {
+	if b.State == CardsDealt {
+		return ErrGameAlreadyStarted
+	}
+
+	for i, player := range b.Players {
+		if player.Id == id {
+			b.Players = append(b.Players[:i], b.Players[i+1:]...)
+			b.Hands = append(b.Hands[:i+1], b.Hands[i+2:]...)
+			if b.onStateChanged != nil {
+				b.onStateChanged()
+			}
+			return nil
+		}
+	}
+	return ErrNotFound
+}
+
 func (b *Blackjack) TogglePlayerReady(playerId string) (*Player, error) {
 	if b.State != WaitingForPlayers {
 		return nil, ErrGameAlreadyStarted

@@ -74,6 +74,7 @@ func TestGetGameState(t *testing.T) {
 }
 
 func buildAddPlayerRequest(t *testing.T, tableId string, playerName string) *http.Request {
+	t.Helper()
 	body := rest.AddPlayerRequest{PlayerName: playerName}
 	bodyBytes, err := json.Marshal(body)
 	if err != nil {
@@ -88,6 +89,7 @@ func buildAddPlayerRequest(t *testing.T, tableId string, playerName string) *htt
 }
 
 func buildRemovePlayerRequest(t *testing.T, tableId string, playerId string) *http.Request {
+	t.Helper()
 	request, err := http.NewRequest(http.MethodDelete, "/tables/players/{tableId}/{playerId}", nil)
 	if err != nil {
 		t.Fatal(err)
@@ -151,7 +153,10 @@ func TestRemovePlayerWhenGameAlreadyStarted(t *testing.T) {
 	api.Games["1"] = &game
 
 	newPlayer, _ := game.AddPlayer("Player 1")
-	game.TogglePlayerReady(newPlayer.Id)
+	_, err := game.TogglePlayerReady(newPlayer.Id)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	removePlayerResponseWriter := httptest.NewRecorder()
 	removePlayerRequest := buildRemovePlayerRequest(t, "1", newPlayer.Id)

@@ -59,6 +59,13 @@ export default function Lobby({
     }
   };
 
+  const Leave = async () => {
+    await fetch(BASE_URL + "/tables/players/" + gameId + "/" + playerId, {
+      method: "DELETE",
+    });
+    onGameStartedChanged(false);
+  };
+
   return (
     <>
       <div className="column">
@@ -93,7 +100,7 @@ export default function Lobby({
         ) : (
           <button onClick={ReportReadiness}>Ready</button>
         )}
-        <button onClick={() => onGameStartedChanged(false)}>Leave</button>
+        <button onClick={Leave}>Leave</button>
       </div>
     </>
   );

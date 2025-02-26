@@ -42,10 +42,14 @@ func restApiServer() {
 	mux.HandleFunc("/tables/{tableId}", api.GetGameState)
 	mux.HandleFunc("/tables/ready/{tableId}/{playerId}", api.TogglePlayerReady)
 	mux.HandleFunc("/tables/players/{tableId}", api.AddPlayer)
+	mux.HandleFunc("/tables/players/{tableId}/{playerId}", api.RemovePlayer)
 	mux.HandleFunc("/tables/{tableId}/{playerId}", api.PlayerAction)
 	mux.HandleFunc("/state-updates/{tableId}", api.AddStateObserver)
 
-	corsMux := cors.Default().Handler(mux)
+	corsMux := cors.New(cors.Options{
+		AllowedOrigins: []string{"http://localhost:5173"},
+		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE"},
+	}).Handler(mux)
 
 	s := &http.Server{
 		Addr:           ServerAddr,

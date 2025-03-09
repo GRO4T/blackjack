@@ -83,8 +83,6 @@ export default function MainMenu({
   return (
     <>
       <div className="column">
-        <button onClick={StartGame}>Host a new game</button>
-        <button onClick={() => JoinGame(gameId)}>Join a game</button>
         <input
           value={playerName}
           placeholder="playerName"
@@ -95,8 +93,10 @@ export default function MainMenu({
           placeholder="tableId"
           onChange={(e) => onGameIdChange(e.target.value)}
         />
+        <button onClick={StartGame}>Host a new game</button>
+        <button onClick={() => JoinGame(gameId)}>Join a game</button>
+        <p className="blackjack-err-msg">{info}</p>
       </div>
-      <p>{info}</p>
     </>
   );
 }

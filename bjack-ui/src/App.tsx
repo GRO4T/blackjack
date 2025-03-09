@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import "./App.css";
 import Game from "./components/Game";
 import Lobby from "./components/Lobby";
 import MainMenu from "./components/MainMenu";
-import { CARDS_DEALT_STATE, BASE_URL } from "./constants";
+import { BASE_URL, WAITING_FOR_PLAYERS } from "./constants";
 import { useSessionStorage } from "./useSessionStorage";
 
 export interface Player {
@@ -48,25 +48,25 @@ export default function App() {
   }, [gameId, gameStateSeq]);
 
   if (gameStarted) {
-    if (gameState.state === CARDS_DEALT_STATE) {
+    if (gameState.state === WAITING_FOR_PLAYERS) {
       return (
-        <Game
+        <Lobby
+          onGameStartedChanged={setGameStarted}
           gameId={gameId}
           playerId={playerId}
           gameState={gameState}
-          playerName={playerName}
+          gameStateSeq={gameStateSeq}
+          onGameStateSeqChanged={setGameStateSeq}
         />
       );
     }
     return (
-      <Lobby
-        onGameStartedChanged={setGameStarted}
+      <Game
         gameId={gameId}
         playerId={playerId}
-        playerName={playerName}
         gameState={gameState}
-        gameStateSeq={gameStateSeq}
-        onGameStateSeqChanged={setGameStateSeq}
+        playerName={playerName}
+        onGameStartedChanged={setGameStarted}
       />
     );
   }

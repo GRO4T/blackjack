@@ -1,5 +1,5 @@
 import { Dispatch, SetStateAction, useEffect } from "react";
-import { BASE_URL } from "../constants";
+import { API_URL } from "../constants";
 import { GameState, Player } from "../App";
 
 interface Props {
@@ -20,7 +20,7 @@ export default function Lobby({
   onGameStateSeqChanged,
 }: Props) {
   const webSocket = new WebSocket(
-    "ws://localhost:8080/state-updates/" + gameId,
+    import.meta.env.VITE_API_WS_URL + "/state-updates/" + gameId,
   );
 
   useEffect(() => {
@@ -34,7 +34,7 @@ export default function Lobby({
   };
 
   const ReportReadiness = async () => {
-    return await fetch(BASE_URL + "/tables/ready/" + gameId + "/" + playerId, {
+    return await fetch(API_URL + "/tables/ready/" + gameId + "/" + playerId, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: null,
@@ -42,7 +42,7 @@ export default function Lobby({
   };
 
   const Leave = async () => {
-    await fetch(BASE_URL + "/tables/players/" + gameId + "/" + playerId, {
+    await fetch(API_URL + "/tables/players/" + gameId + "/" + playerId, {
       method: "DELETE",
     });
     onGameStartedChanged(false);

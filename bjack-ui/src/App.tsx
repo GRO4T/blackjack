@@ -3,7 +3,7 @@ import "./App.css";
 import Game from "./components/Game";
 import Lobby from "./components/Lobby";
 import MainMenu from "./components/MainMenu";
-import { BASE_URL, WAITING_FOR_PLAYERS } from "./constants";
+import { API_URL, WAITING_FOR_PLAYERS } from "./constants";
 import { useSessionStorage } from "./useSessionStorage";
 
 export interface Player {
@@ -40,7 +40,7 @@ export default function App() {
   });
 
   useEffect(() => {
-    fetch(BASE_URL + "/tables/" + gameId)
+    fetch(API_URL + "/tables/" + gameId)
       .then((res) => res.json())
       .then((body) => {
         setGameState(body);

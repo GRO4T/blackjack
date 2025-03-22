@@ -1,4 +1,4 @@
-export const BASE_URL = "http://localhost:8080";
+export const API_URL = import.meta.env.VITE_API_URL;
 
 export const WAITING_FOR_PLAYERS = 0;
 export const CARDS_DEALT_STATE = 1;

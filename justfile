@@ -6,7 +6,7 @@ PROTO_OUT := "./bjack-api/proto/blackjack.pb.go ./bjack-api/proto/blackjack_grpc
 API_DIR := "./bjack-api"
 API_EXECUTABLE := "./bin/bjack-api"
 UI_DIR := "./bjack-ui"
-CI_IMAGE_TAG := "0.0.4"
+CI_IMAGE_TAG := "0.0.5"
 
 default:
   just --list

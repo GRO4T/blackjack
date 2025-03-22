@@ -95,7 +95,7 @@ export default function MainMenu({
         />
         <button onClick={StartGame}>Host a new game</button>
         <button onClick={() => JoinGame(gameId)}>Join a game</button>
-        <p className="blackjack-err-msg">{info}</p>
+        <p className="info">{info}</p>
       </div>
     </>
   );

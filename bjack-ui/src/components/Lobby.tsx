@@ -51,20 +51,19 @@ export default function Lobby({
   return (
     <>
       <div className="column">
-        <div id="table-title" className="row centered light-border mid-font">
+        <div className="table-name row centered light-border mid-font">
           Table No. {gameId}
         </div>
-        <div id="player-grid" className="row centered">
+        <div className="players row centered">
           {gameState.players &&
             gameState.players.map((player: Player) => (
               <div
-                id="player-card"
                 key={player.name}
-                className="column centered light-border small-font"
+                className="player column centered light-border small-font"
               >
                 <p>{player.name}</p>
                 <input
-                  id="player-card-checkbox"
+                  className="player-readiness"
                   type="checkbox"
                   checked={player.isReady}
                   readOnly

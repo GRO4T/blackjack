@@ -1,12 +1,11 @@
 import { Dispatch, SetStateAction, useEffect } from "react";
-import { BASE_URL, CARDS_DEALT_STATE, FINISHED_STATE } from "../constants";
-import { GameState, Player, Card } from "../App";
+import { BASE_URL } from "../constants";
+import { GameState, Player } from "../App";
 
 interface Props {
   onGameStartedChanged: Dispatch<SetStateAction<boolean>>;
   gameId: string;
   playerId: string;
-  playerName: string;
   gameState: GameState;
   gameStateSeq: number;
   onGameStateSeqChanged: Dispatch<SetStateAction<number>>;
@@ -16,7 +15,6 @@ export default function Lobby({
   onGameStartedChanged,
   gameId,
   playerId,
-  playerName,
   gameState,
   gameStateSeq,
   onGameStateSeqChanged,
@@ -43,22 +41,6 @@ export default function Lobby({
     });
   };
 
-  const GetOutcome = (name: string) => {
-    const player = gameState.players.find(
-      (player: Player) => player.name === name
-    );
-    switch (player?.outcome) {
-      case 1:
-        return "Win";
-      case 2:
-        return "Lose";
-      case 3:
-        return "Push";
-      default:
-        return "Unknown";
-    }
-  };
-
   const Leave = async () => {
     await fetch(BASE_URL + "/tables/players/" + gameId + "/" + playerId, {
       method: "DELETE",
@@ -69,38 +51,32 @@ export default function Lobby({
   return (
     <>
       <div className="column">
-        Game ID: {gameId} <br />
-        Players
-        <ul>
+        <div className="table-name row centered light-border mid-font">
+          Table No. {gameId}
+        </div>
+        <div className="players row centered">
           {gameState.players &&
             gameState.players.map((player: Player) => (
-              <li key={player.name}>
-                {player.name}
-                <input type="checkbox" checked={player.isReady} readOnly />
-              </li>
+              <div
+                key={player.name}
+                className="player column centered light-border small-font"
+              >
+                <p>{player.name}</p>
+                <input
+                  className="player-readiness"
+                  type="checkbox"
+                  checked={player.isReady}
+                  readOnly
+                />
+              </div>
             ))}
-        </ul>
-        Hands
-        <ul>
-          {gameState.hands &&
-            gameState.hands.map((hand: Card[], index: number) => (
-              <li key={index}>
-                {hand.map((card: Card) => (
-                  <span key={card.rank + card.suit}>
-                    {card.rank} {card.suit}+
-                  </span>
-                ))}
-              </li>
-            ))}
-        </ul>
-        State: {gameState.state} <br />
-        CurrentPlayer: {gameState.currentPlayer}
-        {gameState.state === FINISHED_STATE ? (
-          <div>{GetOutcome(playerName)}</div>
-        ) : (
-          <button onClick={ReportReadiness}>Ready</button>
-        )}
-        <button onClick={Leave}>Leave</button>
+        </div>
+        <div className="row centered">
+          <div className="column">
+            <button onClick={ReportReadiness}>Ready</button>
+            <button onClick={Leave}>Leave</button>
+          </div>
+        </div>
       </div>
     </>
   );

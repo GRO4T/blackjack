@@ -45,7 +45,7 @@ export default function App() {
       .then((body) => {
         setGameState(body);
       });
-  }, [gameId, gameStateSeq]);
+  }, [gameId, gameStateSeq]); // eslint-disable-line
 
   if (gameStarted) {
     if (gameState.state === WAITING_FOR_PLAYERS) {

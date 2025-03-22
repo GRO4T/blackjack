@@ -49,14 +49,18 @@ export default function MainMenu({
       const createGameBody = await createGameResp.json();
       const addPlayerResp = await CallAddPlayer(
         createGameBody["tableId"],
-        playerName
+        playerName,
       );
       const addPlayerBody = await addPlayerResp.json();
       onGameStartedChange(true);
       onGameIdChange(createGameBody["tableId"]);
       onPlayerIdChange(addPlayerBody["playerId"]);
-    } catch (error: any) {
-      console.log("Error starting a new game: " + error.message);
+    } catch (error) {
+      if (error instanceof Error) {
+        console.log("Error starting a new game: " + error.message);
+      } else {
+        console.log("Error starting a new game: " + String(error));
+      }
     }
   };
 
@@ -69,14 +73,18 @@ export default function MainMenu({
           setInfo(errMsg);
         }
         throw new Error(
-          "POST /tables/players/{tableId} returned " + addPlayerResp.status
+          "POST /tables/players/{tableId} returned " + addPlayerResp.status,
         );
       }
       const addPlayerBody = await addPlayerResp.json();
       onGameStartedChange(true);
       onPlayerIdChange(addPlayerBody["playerId"]);
-    } catch (error: any) {
-      console.log("Error joining the game: " + error.message);
+    } catch (error) {
+      if (error instanceof Error) {
+        console.log("Error joining the game: " + error.message);
+      } else {
+        console.log("Error joining the game: " + String(error));
+      }
     }
   };
 

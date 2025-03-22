@@ -36,13 +36,13 @@ export default function Game({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: null,
-      }
+      },
     );
   };
 
   const GetOutcome = (name: string) => {
     const player = gameState.players.find(
-      (player: Player) => player.name === name
+      (player: Player) => player.name === name,
     );
     switch (player?.outcome) {
       case 1:
@@ -173,9 +173,12 @@ export default function Game({
       </div>
       <footer>
         <small>
-        <a href="https://www.flaticon.com/free-icons/poker" title="poker icons">
-          Poker icons created by Freepik - Flaticon
-        </a>
+          <a
+            href="https://www.flaticon.com/free-icons/poker"
+            title="poker icons"
+          >
+            Poker icons created by Freepik - Flaticon
+          </a>
         </small>
       </footer>
     </>

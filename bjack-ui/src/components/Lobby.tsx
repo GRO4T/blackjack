@@ -20,12 +20,12 @@ export default function Lobby({
   onGameStateSeqChanged,
 }: Props) {
   const webSocket = new WebSocket(
-    "ws://localhost:8080/state-updates/" + gameId
+    "ws://localhost:8080/state-updates/" + gameId,
   );
 
   useEffect(() => {
     onGameStateSeqChanged(gameStateSeq + 1);
-  }, []);
+  }, []); // eslint-disable-line
 
   webSocket.onmessage = (event) => {
     if (event.data === "NewState") {

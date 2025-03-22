@@ -6,9 +6,12 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     container:
-      image: dkolaska/blackjack-ci:0.0.4
+      image: dkolaska/blackjack-ci:0.0.5
     steps:
       - uses: actions/checkout@v4
+
+      - name: Setup
+        run: just setup
 
       - name: Format
         run: just fmt

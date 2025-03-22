@@ -1,5 +1,5 @@
 import { useState, Dispatch, SetStateAction } from "react";
-import { BASE_URL } from "../constants";
+import { API_URL } from "../constants";
 
 interface Props {
   gameId: string;
@@ -21,7 +21,7 @@ export default function MainMenu({
   const [info, setInfo] = useState("");
 
   const CallCreateGame = async (playerName: string) => {
-    return await fetch(BASE_URL + "/tables", {
+    return await fetch(API_URL + "/tables", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ playerName: playerName }),
@@ -29,7 +29,7 @@ export default function MainMenu({
   };
 
   const CallAddPlayer = async (tableId: string, playerName: string) => {
-    return await fetch(BASE_URL + "/tables/players/" + tableId, {
+    return await fetch(API_URL + "/tables/players/" + tableId, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ playerName: playerName }),

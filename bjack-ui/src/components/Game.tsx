@@ -1,7 +1,7 @@
 import { Dispatch, SetStateAction } from "react";
 import { GameState, Player, Card } from "../App";
 import {
-  BASE_URL,
+  API_URL,
   CARDS_DEALT_STATE,
   FINISHED_STATE,
   SUIT_CLUBS,
@@ -31,7 +31,7 @@ export default function Game({
 }: Props) {
   const PlayerAction = async (action: string) => {
     return await fetch(
-      BASE_URL + "/tables/" + gameId + "/" + playerId + "?action=" + action,
+      API_URL + "/tables/" + gameId + "/" + playerId + "?action=" + action,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -57,7 +57,7 @@ export default function Game({
   };
 
   const Leave = async () => {
-    await fetch(BASE_URL + "/tables/players/" + gameId + "/" + playerId, {
+    await fetch(API_URL + "/tables/players/" + gameId + "/" + playerId, {
       method: "DELETE",
     });
     onGameStartedChanged(false);

@@ -11,13 +11,17 @@ CI_IMAGE_TAG := "0.0.4"
 default:
   just --list
 
+[no-quiet]
 setup:
 	go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.1	
 	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.5.1
-	cd bjack-ui && npm install
+	cd {{UI_DIR}} && npm install
 
+[no-quiet]
 clean:
-	rm -f {{PROTO_OUT}} {{API_DIR}}/{{API_EXECUTABLE}}
+	-rm {{PROTO_OUT}}
+	-rm {{API_DIR}}/{{API_EXECUTABLE}}
+	-rm -r {{UI_DIR}}/dist
 
 proto:
 	protoc -I=. --go_out={{PROTO_OUT_DIR}} --go_opt=paths=source_relative \
@@ -33,11 +37,18 @@ run_api: build_api
 	{{API_DIR}}/{{API_EXECUTABLE}}
 
 [group("ui")]
+build_ui:
+	cd {{UI_DIR}} && npm install && npm run build
+
+[group("ui")]
 run_ui MODE:
 	#!/usr/bin/env bash
 	cd {{UI_DIR}}
+	npm install
 	if [[ "{{MODE}}" == "dev" ]]; then
 		npm run dev
+	elif [[ "{{MODE}}" == "preview" ]]; then
+		npm run preview
 	else
 		echo "Unknown mode: {{MODE}}"
 	fi
@@ -46,17 +57,23 @@ run_ui MODE:
 test: proto
 	cd {{API_DIR}} && go test ./...
 
+[no-quiet]
 [group("validation")]
 lint: proto
 	cd {{API_DIR}} && golangci-lint run
+	cd {{UI_DIR}} && npm run lint
 
+[no-quiet]
 [group("validation")]
 fmt: proto
 	cd {{API_DIR}} && test -z $(gofmt -l .) || gofmt -l . | false
+	cd {{UI_DIR}} && npx prettier . --check
 
+[no-quiet]
 [group("validation")]
 fmt_fix: proto
 	cd {{API_DIR}} && gofmt -s -w .
+	cd {{UI_DIR}} && npx prettier . --write
 
 [group("ci_image")]
 build_ci_image:

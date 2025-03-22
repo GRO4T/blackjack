@@ -6,15 +6,12 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     container:
-      image: dkolaska/blackjack-ci:0.0.3
+      image: dkolaska/blackjack-ci:0.0.4
     steps:
       - uses: actions/checkout@v4
 
-      - name: Generate protobuf files
-        run: make proto
-
       - name: Format
-        run: test -z $(gofmt -l .) || gofmt -l . | false
+        run: just fmt
       
       - name: Lint
         uses: golangci/golangci-lint-action@v6.5.0
@@ -25,4 +22,4 @@ jobs:
           GOFLAGS: -buildvcs=false
       
       - name: Test
-        run: make test
+        run: just test

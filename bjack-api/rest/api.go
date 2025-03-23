@@ -252,6 +252,8 @@ func (a *RestApi) AddStateObserver(w http.ResponseWriter, r *http.Request) {
 	} else {
 		a.Websockets[tableId] = []*websocket.Conn{ws}
 	}
+
+	slog.Debug("Created a websocket for state updates", "tableId", tableId)
 }
 
 func getRandomId() string {

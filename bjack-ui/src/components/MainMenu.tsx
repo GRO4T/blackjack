@@ -1,5 +1,6 @@
 import { useState, Dispatch, SetStateAction } from "react";
-import { API_URL } from "../constants";
+import { API_URL, INITIAL_GAME_STATE } from "../constants";
+import { GameState } from "../App";
 
 interface Props {
   gameId: string;
@@ -8,6 +9,7 @@ interface Props {
   onPlayerNameChange: Dispatch<SetStateAction<string>>;
   onGameStartedChange: Dispatch<SetStateAction<boolean>>;
   onPlayerIdChange: Dispatch<SetStateAction<string>>;
+  onGameStateChange: Dispatch<SetStateAction<GameState>>;
 }
 
 export default function MainMenu({
@@ -17,6 +19,7 @@ export default function MainMenu({
   onPlayerNameChange,
   onGameStartedChange,
   onPlayerIdChange,
+  onGameStateChange,
 }: Props) {
   const [info, setInfo] = useState("");
 
@@ -55,6 +58,7 @@ export default function MainMenu({
       onGameStartedChange(true);
       onGameIdChange(createGameBody["tableId"]);
       onPlayerIdChange(addPlayerBody["playerId"]);
+      onGameStateChange(INITIAL_GAME_STATE);
     } catch (error) {
       if (error instanceof Error) {
         console.log("Error starting a new game: " + error.message);
@@ -79,6 +83,7 @@ export default function MainMenu({
       const addPlayerBody = await addPlayerResp.json();
       onGameStartedChange(true);
       onPlayerIdChange(addPlayerBody["playerId"]);
+      onGameStateChange(INITIAL_GAME_STATE);
     } catch (error) {
       if (error instanceof Error) {
         console.log("Error joining the game: " + error.message);

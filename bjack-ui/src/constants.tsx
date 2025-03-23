@@ -8,3 +8,10 @@ export const SUIT_SPADES = 1;
 export const SUIT_DIAMONDS = 2;
 export const SUIT_CLUBS = 3;
 export const SUIT_HEARTS = 4;
+
+export const INITIAL_GAME_STATE = {
+  players: [],
+  hands: [],
+  state: 0,
+  currentPlayer: 0,
+};

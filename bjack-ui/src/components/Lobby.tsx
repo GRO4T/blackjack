@@ -19,19 +19,9 @@ export default function Lobby({
   gameStateSeq,
   onGameStateSeqChanged,
 }: Props) {
-  const webSocket = new WebSocket(
-    import.meta.env.VITE_API_WS_URL + "/state-updates/" + gameId,
-  );
-
   useEffect(() => {
     onGameStateSeqChanged(gameStateSeq + 1);
   }, []); // eslint-disable-line
-
-  webSocket.onmessage = (event) => {
-    if (event.data === "NewState") {
-      onGameStateSeqChanged(gameStateSeq + 1);
-    }
-  };
 
   const ReportReadiness = async () => {
     return await fetch(API_URL + "/tables/ready/" + gameId + "/" + playerId, {

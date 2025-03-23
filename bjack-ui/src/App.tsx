@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import "./App.css";
 import Game from "./components/Game";
 import Lobby from "./components/Lobby";
@@ -36,6 +36,7 @@ export default function App() {
     "gameState",
     INITIAL_GAME_STATE,
   );
+  const webSocket = useRef<WebSocket | null>(null);
 
   useEffect(() => {
     fetch(API_URL + "/tables/" + gameId)
@@ -44,6 +45,23 @@ export default function App() {
         setGameState(body);
       });
   }, [gameId, gameStateSeq]); // eslint-disable-line
+
+  useEffect(() => {
+    if (gameId === "") {
+      return;
+    }
+    webSocket.current = new WebSocket(
+      import.meta.env.VITE_API_WS_URL + "/state-updates/" + gameId,
+    );
+  }, [gameId]);
+
+  if (webSocket.current) {
+    webSocket.current.onmessage = (event) => {
+      if (event.data === "NewState") {
+        setGameStateSeq(gameStateSeq + 1);
+      }
+    };
+  }
 
   if (gameStarted) {
     if (gameState.state === WAITING_FOR_PLAYERS) {

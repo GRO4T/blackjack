@@ -3,7 +3,7 @@ import "./App.css";
 import Game from "./components/Game";
 import Lobby from "./components/Lobby";
 import MainMenu from "./components/MainMenu";
-import { API_URL, WAITING_FOR_PLAYERS } from "./constants";
+import { API_URL, INITIAL_GAME_STATE, WAITING_FOR_PLAYERS } from "./constants";
 import { useSessionStorage } from "./useSessionStorage";
 
 export interface Player {
@@ -32,12 +32,10 @@ export default function App() {
   const [playerName, setPlayerName] = useSessionStorage("playerName", "");
   const [playerId, setPlayerId] = useSessionStorage("playerId", "");
   const [gameStateSeq, setGameStateSeq] = useSessionStorage("gameStateSeq", 0);
-  const [gameState, setGameState] = useSessionStorage("gameState", {
-    players: [],
-    hands: [],
-    state: 0,
-    currentPlayer: 0,
-  });
+  const [gameState, setGameState] = useSessionStorage(
+    "gameState",
+    INITIAL_GAME_STATE,
+  );
 
   useEffect(() => {
     fetch(API_URL + "/tables/" + gameId)
@@ -78,6 +76,7 @@ export default function App() {
       onPlayerNameChange={setPlayerName}
       onGameIdChange={setGameId}
       onPlayerIdChange={setPlayerId}
+      onGameStateChange={setGameState}
     />
   );
 }

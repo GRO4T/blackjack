@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"os"
 	"time"
 
 	bgrpc "github.com/GRO4T/bjack-api/grpc"
@@ -17,11 +18,11 @@ import (
 )
 
 const (
-	ServerAddr = "localhost:8080"
+	ServerAddr = "0.0.0.0:8000"
 )
 
 func grpcServer() {
-	listener, err := net.Listen("tcp", ServerAddr)
+	listener, err := net.Listen("tcp", ServerAddr) //nolint:gosec
 	if err != nil {
 		slog.Error(fmt.Sprintf("Failed to listen: %v", err))
 	}
@@ -46,8 +47,13 @@ func restApiServer() {
 	mux.HandleFunc("/tables/{tableId}/{playerId}", api.PlayerAction)
 	mux.HandleFunc("/state-updates/{tableId}", api.AddStateObserver)
 
+	uiUrl, ok := os.LookupEnv("UI_URL")
+	if !ok {
+		slog.Error("UI_URL not provided")
+		os.Exit(1)
+	}
 	corsMux := cors.New(cors.Options{
-		AllowedOrigins: []string{"http://localhost:5173"},
+		AllowedOrigins: []string{uiUrl},
 		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE"},
 	}).Handler(mux)
 

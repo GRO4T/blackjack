@@ -12,9 +12,13 @@ default:
   just --list
 
 [no-quiet]
-setup:
+setup: setup_api setup_ui
+
+setup_api:
 	go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.1	
 	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.5.1
+
+setup_ui:
 	cd {{UI_DIR}} && npm install
 
 [no-quiet]
@@ -33,8 +37,16 @@ build_api: proto
 	cd {{API_DIR}} && go build -o {{API_EXECUTABLE}}
 
 [group("api")]
-run_api: build_api
-	{{API_DIR}}/{{API_EXECUTABLE}}
+run_api_dev:
+	eval $(cat {{API_DIR}}/.env.development) {{API_DIR}}/{{API_EXECUTABLE}}
+
+[group("api")]
+build_api_image:
+	docker build -t bjack-api -f docker/api.Dockerfile .
+
+[group("api")]
+run_api_image_dev:
+	docker run -p 8000:8000 --env-file {{API_DIR}}/.env.development bjack-api
 
 [group("ui")]
 build_ui:
@@ -44,7 +56,6 @@ build_ui:
 run_ui MODE:
 	#!/usr/bin/env bash
 	cd {{UI_DIR}}
-	npm install
 	if [[ "{{MODE}}" == "dev" ]]; then
 		npm run dev
 	elif [[ "{{MODE}}" == "preview" ]]; then
@@ -77,7 +88,7 @@ fmt_fix: proto
 
 [group("ci_image")]
 build_ci_image:
-	docker build -t dkolaska/blackjack-ci:{{CI_IMAGE_TAG}} -f ci.dockerfile --platform linux/amd64 .
+	docker build -t dkolaska/blackjack-ci:{{CI_IMAGE_TAG}} -f docker/ci.Dockerfile --platform linux/amd64 .
 
 [group("ci_image")]
 push_ci_image:

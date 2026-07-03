@@ -31,13 +31,13 @@ First run `just setup` to install necessary packages.
 To start the backend service run
 
 ```
-just build_api && just run_api_dev
+just run_api_dev
 ```
 
 Alternatively you can use Docker
 
 ```
-just build_api_image && just run_api_image
+just run_api_image
 ```
 
 ### Frontend
@@ -45,13 +45,13 @@ just build_api_image && just run_api_image
 To start the frontend run
 
 ```
-just build_ui && just run_ui dev
+just run_ui dev
 ```
 
 If you want to preview the production build run
 
 ```
-just build_ui && just run_ui preview
+just run_ui preview
 ```
 
 ### Validation

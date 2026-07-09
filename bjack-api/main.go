@@ -2,6 +2,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log/slog"
@@ -22,7 +23,8 @@ const (
 )
 
 func grpcServer() {
-	listener, err := net.Listen("tcp", ServerAddr) //nolint:gosec
+	var lc net.ListenConfig
+	listener, err := lc.Listen(context.Background(), "tcp", ServerAddr) //nolint:gosec
 	if err != nil {
 		slog.Error(fmt.Sprintf("Failed to listen: %v", err))
 	}

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import "./App.css";
 import Game from "./components/Game";
 import Lobby from "./components/Lobby";
@@ -32,11 +32,10 @@ export default function App() {
   const [playerName, setPlayerName] = useSessionStorage("playerName", "");
   const [playerId, setPlayerId] = useSessionStorage("playerId", "");
   const [gameStateSeq, setGameStateSeq] = useSessionStorage("gameStateSeq", 0);
-  const [gameState, setGameState] = useSessionStorage(
+  const [gameState, setGameState] = useSessionStorage<GameState>(
     "gameState",
     INITIAL_GAME_STATE,
   );
-  const webSocket = useRef<WebSocket | null>(null);
 
   useEffect(() => {
     fetch(API_URL + "/tables/" + gameId)
@@ -50,18 +49,18 @@ export default function App() {
     if (gameId === "") {
       return;
     }
-    webSocket.current = new WebSocket(
+    const ws = new WebSocket(
       import.meta.env.VITE_API_WS_URL + "/state-updates/" + gameId,
     );
-  }, [gameId]);
-
-  if (webSocket.current) {
-    webSocket.current.onmessage = (event) => {
+    ws.onmessage = (event) => {
       if (event.data === "NewState") {
-        setGameStateSeq(gameStateSeq + 1);
+        setGameStateSeq((seq) => seq + 1);
       }
     };
-  }
+    return () => {
+      ws.close();
+    };
+  }, [gameId, setGameStateSeq]);
 
   if (gameStarted) {
     if (gameState.state === WAITING_FOR_PLAYERS) {

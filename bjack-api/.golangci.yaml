@@ -1,5 +1,6 @@
+version: "2"
 linters:
-  disable-all: true
+  default: none
   enable:
     - bodyclose
     - copyloopvar
@@ -7,9 +8,7 @@ linters:
     - errcheck
     - errname
     - gocritic
-    - gofmt
     - gosec
-    - gosimple
     - govet
     - iface
     - ineffassign
@@ -17,28 +16,46 @@ linters:
     - ireturn
     - makezero
     - misspell
+    - mnd
     - nakedret
     - nestif
     - nilerr
     - nilnil
     - noctx
-    - mnd
     - prealloc
     - predeclared
     - reassign
     - sloglint
     - staticcheck
     - tagalign
-    - tenv
     - testableexamples
     - testifylint
     - testpackage
     - thelper
     - unconvert
     - unparam
-    - usestdlibvars
     - unused
+    - usestdlibvars
     - wastedassign
     - whitespace
     - wrapcheck
-    
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - gofmt
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

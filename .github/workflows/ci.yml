@@ -6,7 +6,7 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     container:
-      image: dkolaska/blackjack-ci:0.0.5
+      image: dkolaska/blackjack-ci:0.0.6
     steps:
       - uses: actions/checkout@v4
 

@@ -8,10 +8,10 @@ Implementation of the popular casino game Blackjack, inspired by an exercise fro
 
 ## Prerequisites
 
-* [just](https://github.com/casey/just) 1.40.0
-* Go 1.23
-* Node.js 22.9.0
-* npm 10.8.3
+* [just](https://github.com/casey/just) 1.45.0+
+* Go 1.26.4
+* Node.js 22.x.x
+* npm 10.x.x
 * [Protocol Buffer Compiler](https://github.com/protocolbuffers/protobuf/releases) 25.3
 
 ## Architecture

@@ -125,19 +125,39 @@ run_ui MODE: build_ui
 	fi
 
 [group("validation")]
-test: proto
+test_api: proto
 	cd {{API_DIR}} && go test ./...
 
 [no-quiet]
 [group("validation")]
-lint: proto
+lint:
+    just lint_api
+    just lint_ui
+
+[no-quiet]
+[group("validation")]
+lint_api: proto
 	cd {{API_DIR}} && golangci-lint run
+
+[no-quiet]
+[group("validation")]
+lint_ui:
 	cd {{UI_DIR}} && npm run lint
 
 [no-quiet]
 [group("validation")]
-fmt: proto
+fmt:
+    just fmt_api
+    just fmt_ui
+
+[no-quiet]
+[group("validation")]
+fmt_api: proto
 	cd {{API_DIR}} && test -z $(gofmt -l .) || gofmt -l . | false
+
+[no-quiet]
+[group("validation")]
+fmt_ui:
 	cd {{UI_DIR}} && npx prettier . --check
 
 [no-quiet]

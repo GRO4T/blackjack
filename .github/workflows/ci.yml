@@ -5,17 +5,14 @@ on: push
 jobs:
   validate:
     runs-on: ubuntu-latest
-    container:
-      image: golang:1.26.4-alpine3.24
     steps:
       - uses: actions/checkout@v4
 
-      - name: Validate
+      - uses: extractions/setup-just@v3
+        with:
+          just-version: 1.55.0
+
+      - name: Validate API
         run: |
-          apk update
-          apk add just npm
-          just setup
-          just test
-          just fmt
-          just lint
+          just build_api_image
 

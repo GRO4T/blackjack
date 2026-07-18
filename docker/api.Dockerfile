@@ -13,6 +13,9 @@ COPY justfile /
 RUN just setup_api
 COPY blackjack.proto /
 COPY bjack-api/ /bjack-api
+RUN just test_api
+RUN just fmt_api
+RUN just lint_api
 RUN just build_api 
 
 FROM ${VERSION}

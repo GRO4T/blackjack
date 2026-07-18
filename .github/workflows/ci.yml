@@ -6,23 +6,16 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     container:
-      image: dkolaska/blackjack-ci:0.0.6
+      image: golang:1.26.4-alpine3.24
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup
-        run: just setup
+      - name: Validate
+        run: |
+          apk update
+          apk add just npm
+          just setup
+          just test
+          just fmt
+          just lint
 
-      - name: Format
-        run: just fmt
-      
-      - name: Lint
-        uses: golangci/golangci-lint-action@v6.5.0
-        with:
-          version: v1.62.2
-          working-directory: ./bjack-api
-        env:
-          GOFLAGS: -buildvcs=false
-      
-      - name: Test
-        run: just test

@@ -8,7 +8,6 @@ API_DOCKER_IMAGE := "golang:1.26.4-alpine3.24"
 API_DIR := "./bjack-api"
 API_EXECUTABLE := "./bin/bjack-api"
 UI_DIR := "./bjack-ui"
-CI_IMAGE_TAG := "0.0.6"
 
 default:
   just --list
@@ -147,12 +146,3 @@ fmt_fix: proto
 	cd {{API_DIR}} && gofmt -s -w .
 	cd {{UI_DIR}} && npx prettier . --write
 
-# build docker image used in GitHub Workflows
-[group("ci_image")]
-build_ci_image:
-	docker build --build-arg "VERSION={{API_DOCKER_IMAGE}}" -t dkolaska/blackjack-ci:{{CI_IMAGE_TAG}} -f docker/ci.Dockerfile --platform linux/amd64 .
-
-# push docker image used in GitHub Workflows
-[group("ci_image")]
-push_ci_image:
-	docker push dkolaska/blackjack-ci:{{CI_IMAGE_TAG}}

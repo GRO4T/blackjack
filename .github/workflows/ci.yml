@@ -5,24 +5,14 @@ on: push
 jobs:
   validate:
     runs-on: ubuntu-latest
-    container:
-      image: dkolaska/blackjack-ci:0.0.5
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup
-        run: just setup
-
-      - name: Format
-        run: just fmt
-      
-      - name: Lint
-        uses: golangci/golangci-lint-action@v6.5.0
+      - uses: extractions/setup-just@v3
         with:
-          version: v1.62.2
-          working-directory: ./bjack-api
-        env:
-          GOFLAGS: -buildvcs=false
-      
-      - name: Test
-        run: just test
+          just-version: 1.55.0
+
+      - name: Validate API
+        run: |
+          just build_api_image
+

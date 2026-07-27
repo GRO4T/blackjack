@@ -8,10 +8,10 @@ Implementation of the popular casino game Blackjack, inspired by an exercise fro
 
 ## Prerequisites
 
-* [just](https://github.com/casey/just) 1.40.0
-* Go 1.23
-* Node.js 22.9.0
-* npm 10.8.3
+* [just](https://github.com/casey/just) 1.45.0+
+* Go 1.26.4
+* Node.js 22.x.x
+* npm 10.x.x
 * [Protocol Buffer Compiler](https://github.com/protocolbuffers/protobuf/releases) 25.3
 
 ## Architecture
@@ -31,13 +31,13 @@ First run `just setup` to install necessary packages.
 To start the backend service run
 
 ```
-just build_api && just run_api_dev
+just run_api_dev
 ```
 
 Alternatively you can use Docker
 
 ```
-just build_api_image && just run_api_image
+just run_api_image
 ```
 
 ### Frontend
@@ -45,13 +45,13 @@ just build_api_image && just run_api_image
 To start the frontend run
 
 ```
-just build_ui && just run_ui dev
+just run_ui dev
 ```
 
 If you want to preview the production build run
 
 ```
-just build_ui && just run_ui preview
+just run_ui preview
 ```
 
 ### Validation

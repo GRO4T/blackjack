@@ -1,14 +1,22 @@
-// https://blog.logrocket.com/using-localstorage-react-hooks/
 import { useState, useEffect } from "react";
 
-function getStorageValue(key: string, defaultValue: unknown) {
+function getStorageValue<T>(key: string, defaultValue: T): T {
   const saved = sessionStorage.getItem(key);
-  const initial = saved ? JSON.parse(saved) : defaultValue;
-  return initial;
+  if (saved) {
+    try {
+      return JSON.parse(saved) as T;
+    } catch {
+      return defaultValue;
+    }
+  }
+  return defaultValue;
 }
 
-export const useSessionStorage = (key: string, defaultValue: unknown) => {
-  const [value, setValue] = useState(() => {
+export const useSessionStorage = <T,>(
+  key: string,
+  defaultValue: T,
+): [T, React.Dispatch<React.SetStateAction<T>>] => {
+  const [value, setValue] = useState<T>(() => {
     return getStorageValue(key, defaultValue);
   });
 

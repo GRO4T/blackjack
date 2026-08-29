@@ -14,5 +14,5 @@ jobs:
 
       - name: Validate API
         run: |
-          just build_api_image
+          just api build_image
 

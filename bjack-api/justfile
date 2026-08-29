@@ -1,0 +1,5 @@
+mod api 'api.just'
+
+default:
+  just --list
+

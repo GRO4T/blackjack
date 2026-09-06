@@ -277,8 +277,10 @@ func getScore(hand []deck.Card) int {
 	for _, card := range hand {
 		if card.Rank == deck.Ace {
 			aceCount++
+			score += 11
+		} else {
+			score += int(card.Rank)
 		}
-		score += int(card.Rank)
 	}
 	for aceCount > 0 {
 		if score > 21 { //nolint: mnd

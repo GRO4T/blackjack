@@ -86,7 +86,7 @@ test: proto
 cov: proto
     go test -coverprofile coverage.out ./...
     go tool cover -html coverage.out -o coverage.html
-    open coverage.html
+    xdg-open coverage.html
 
 lint: proto
 	golangci-lint run

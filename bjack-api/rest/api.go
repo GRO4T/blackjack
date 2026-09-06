@@ -243,6 +243,7 @@ var upgrader = websocket.Upgrader{
 }
 
 func (a *RestApi) AddStateObserver(w http.ResponseWriter, r *http.Request) {
+	// TODO: Ensure web sockets close when clients disconnect/become idle
 	tableId := r.PathValue("tableId")
 
 	ws, _ := upgrader.Upgrade(w, r, nil)

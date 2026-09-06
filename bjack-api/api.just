@@ -83,6 +83,11 @@ run_image_dev: build_image
 test: proto
 	go test ./...
 
+cov: proto
+    go test -coverprofile coverage.out ./...
+    go tool cover -html coverage.out -o coverage.html
+    open coverage.html
+
 lint: proto
 	golangci-lint run
 
